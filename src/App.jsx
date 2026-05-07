@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Analytics } from "@vercel/analytics/react";
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -866,6 +867,8 @@ export default function JPMVehiculosWeb() {
       <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
         <button onClick={openAdminLogin} className="cursor-default select-none">© 2026 JPM Vehículos. Compra y venta de vehículos.</button>
       </footer>
+
+      <Analytics />
     </div>
   );
 }
