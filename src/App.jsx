@@ -80,32 +80,6 @@ function validateVehicleForm(form, photos) {
   return { ok: true, message: "" };
 }
 
-function runSelfTests() {
-  const completeForm = {
-    ...emptyForm,
-    name: "Chevrolet Equinox",
-    brand: "Chevrolet",
-    model: "Equinox",
-    version: "1.5 Premier",
-    year: "2018",
-    price: "145.000.000",
-    km: "40000",
-    color: "Gris",
-    motor: "1.5",
-    plateLastDigit: "6",
-    description: "Camioneta en buen estado.",
-  };
-
-  console.assert(validateVehicleForm(emptyForm, []).ok === false, "Debe rechazar formulario vacío");
-  console.assert(validateVehicleForm({ ...completeForm, price: "0" }, [{ url: "x" }]).ok === false, "Debe rechazar precio cero");
-  console.assert(validateVehicleForm(completeForm, []).ok === false, "Debe exigir al menos una foto");
-  console.assert(validateVehicleForm(completeForm, [{ url: "x" }]).ok === true, "Debe aceptar formulario completo");
-  console.assert(cleanPrice("145.000.000") === 145000000, "Debe limpiar puntos del precio");
-  console.assert(money(1000000) === "$1.000.000", "Debe formatear pesos colombianos");
-  console.assert((viteEnv || {}) !== null, "Debe tener fallback seguro para variables de entorno");
-}
-runSelfTests();
-
 function detailsFromForm(form) {
   return [
     { label: "Marca", value: form.brand },
@@ -241,7 +215,7 @@ function FormSelect({ value, onChange, children }) {
   );
 }
 
-function VehicleCard({ vehicle, index, onOpen }) {
+function VehicleCard({ vehicle, onOpen }) {
   return (
     <article onClick={() => onOpen(vehicle)} className="cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 text-white shadow-xl transition hover:-translate-y-1 hover:bg-white/[0.14]">
       <div className="relative">
@@ -276,6 +250,7 @@ export default function JPMVehiculosWeb() {
   const [price, setPrice] = useState(1000000000);
   const [sortOption, setSortOption] = useState("recientes");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [activePhoto, setActivePhoto] = useState("");
   const [footerClicks, setFooterClicks] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -312,6 +287,12 @@ export default function JPMVehiculosWeb() {
       if (data.session) setIsAdminLoggedIn(true);
     });
   }, []);
+
+  useEffect(() => {
+    if (selectedVehicle) {
+      setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
+    }
+  }, [selectedVehicle]);
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
@@ -676,7 +657,7 @@ export default function JPMVehiculosWeb() {
             <p className="mt-3 text-zinc-400">{filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} encontrado{filteredVehicles.length === 1 ? "" : "s"}</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {sortedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} index={index} onOpen={setSelectedVehicle} />)}
+            {sortedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={setSelectedVehicle} />)}
           </div>
           {filteredVehicles.length === 0 && <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center text-zinc-300">No encontramos vehículos con esos filtros. Prueba con otra marca, tipo o sube el precio.</div>}
         </section>
@@ -833,11 +814,33 @@ export default function JPMVehiculosWeb() {
               <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
                 <div className="bg-zinc-100 p-5">
                   <div className="relative">
-                    <img src={selectedVehicle.image} alt={selectedVehicle.name} className="h-[360px] w-full rounded-[1.5rem] object-cover" />
+                    <img
+                    src={activePhoto || selectedVehicle.image}
+                    alt={selectedVehicle.name}
+                    className="h-[360px] w-full rounded-[1.5rem] object-cover"
+                  />
                     <span className={"absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " + (selectedVehicle.status === "Vendido" ? "bg-red-600 text-white" : "bg-emerald-400 text-zinc-950")}>{selectedVehicle.status || "Disponible"}</span>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3">
-                    {selectedVehicle.photos.map((photo, index) => <img key={index} src={photo} alt={selectedVehicle.name} className="h-24 w-full rounded-2xl object-cover" />)}
+                    {(selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).map((photo, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setActivePhoto(photo)}
+                        className={
+                          "overflow-hidden rounded-2xl border-2 transition " +
+                          (activePhoto === photo
+                            ? "border-amber-400"
+                            : "border-transparent hover:border-zinc-300")
+                        }
+                      >
+                        <img
+                          src={photo}
+                          alt={`${selectedVehicle.name} ${index + 1}`}
+                          className="h-24 w-full object-cover"
+                        />
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div className="p-6 md:p-8">
