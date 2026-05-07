@@ -423,6 +423,10 @@ export default function JPMVehiculosWeb() {
     setAdminError("");
   }
 
+  function removeAdminPhoto(indexToRemove) {
+    setAdminPhotos((current) => current.filter((_, index) => index !== indexToRemove));
+  }
+
   async function saveVehicle(event) {
     event.preventDefault();
     const validation = validateVehicleForm(adminForm, adminPhotos);
@@ -758,10 +762,22 @@ export default function JPMVehiculosWeb() {
                       <div>
                         <div className="mt-4 flex items-center justify-between gap-3">
                           <p className="text-sm font-bold text-zinc-700">{adminPhotos.length} foto{adminPhotos.length === 1 ? "" : "s"} cargada{adminPhotos.length === 1 ? "" : "s"}</p>
-                          <button type="button" onClick={() => setAdminPhotos([])} className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-bold text-white">Borrar fotos</button>
+                          <span className="text-xs font-semibold text-zinc-500">Elimina una foto con la X</span>
                         </div>
                         <div className="mt-4 grid grid-cols-3 gap-3">
-                          {adminPhotos.map((photo, index) => <img key={index} src={photo.url || photo} alt="Vista previa" className="h-24 w-full rounded-2xl object-cover" />)}
+                          {adminPhotos.map((photo, index) => (
+                            <div key={index} className="relative">
+                              <img src={photo.url || photo} alt="Vista previa" className="h-24 w-full rounded-2xl object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => removeAdminPhoto(index)}
+                                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow-lg hover:bg-red-700"
+                                aria-label="Eliminar foto"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
