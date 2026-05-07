@@ -52,12 +52,21 @@ const requiredFields = [
   ["status", "Estado"],
 ];
 
-function cleanPrice(value) {
+function cleanNumber(value) {
   return Number(String(value).replace(/[^0-9]/g, "")) || 0;
+}
+
+function cleanPrice(value) {
+  return cleanNumber(value);
 }
 
 function money(value) {
   return "$" + new Intl.NumberFormat("es-CO").format(Number(value || 0));
+}
+
+function formatKm(value) {
+  const number = cleanNumber(value);
+  return new Intl.NumberFormat("es-CO").format(number);
 }
 
 function validateVehicleForm(form, photos) {
@@ -74,12 +83,44 @@ function validateVehicleForm(form, photos) {
     return { ok: false, message: "El precio debe ser mayor a $0." };
   }
 
+  if (cleanNumber(form.km) <= 0) {
+    return { ok: false, message: "El kilometraje debe ser mayor a 0." };
+  }
+
   if (!photos || photos.length === 0) {
     return { ok: false, message: "Debes subir al menos una foto del vehículo." };
   }
 
   return { ok: true, message: "" };
 }
+
+function runSelfTests() {
+  const completeForm = {
+    ...emptyForm,
+    name: "Mazda 3 Touring MHEV",
+    brand: "Mazda",
+    model: "3",
+    version: "Touring MHEV",
+    year: "2026",
+    price: "94900000",
+    km: "40000",
+    color: "Blanco",
+    motor: "2.0",
+    plateLastDigit: "6",
+    description: "Vehículo en excelente estado.",
+  };
+
+  console.assert(validateVehicleForm(emptyForm, []).ok === false, "Debe rechazar formulario vacío");
+  console.assert(validateVehicleForm({ ...completeForm, price: "0" }, [{ url: "x" }]).ok === false, "Debe rechazar precio cero");
+  console.assert(validateVehicleForm({ ...completeForm, km: "0" }, [{ url: "x" }]).ok === false, "Debe rechazar kilometraje cero");
+  console.assert(validateVehicleForm(completeForm, []).ok === false, "Debe exigir al menos una foto");
+  console.assert(validateVehicleForm(completeForm, [{ url: "x" }]).ok === true, "Debe aceptar formulario completo");
+  console.assert(cleanPrice("94.900.000") === 94900000, "Debe limpiar puntos del precio");
+  console.assert(cleanNumber("40.000 km") === 40000, "Debe limpiar puntos y texto del kilometraje");
+  console.assert(formatKm("40000") === "40.000", "Debe formatear kilometraje colombiano");
+  console.assert(money(1000000) === "$1.000.000", "Debe formatear pesos colombianos");
+}
+runSelfTests();
 
 function detailsFromForm(form) {
   return [
@@ -94,7 +135,7 @@ function detailsFromForm(form) {
     { label: "Motor", value: form.motor },
     { label: "Tipo de carrocería", value: form.bodyType },
     { label: "Con cámara de reversa", value: form.reverseCamera },
-    { label: "Kilómetros", value: `${form.km} km` },
+    { label: "Kilómetros", value: `${formatKm(form.km)} km` },
     { label: "Último dígito de la placa", value: form.plateLastDigit },
   ];
 }
@@ -112,7 +153,7 @@ function vehicleFromSupabase(row) {
     motor: row.motor,
     bodyType: row.body_type,
     reverseCamera: row.reverse_camera,
-    km: String(row.km || "").replace(/ km/i, ""),
+    km: String(row.km || "").replace(/[^0-9]/g, ""),
     plateLastDigit: row.plate_last_digit,
   };
 
@@ -147,8 +188,8 @@ const starterVehicles = [
     image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1200&auto=format&fit=crop",
     photos: [
       "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511918984145-48de785d4c4e?q=80&w=1200&auto=format&fit=crop",
     ],
     description: "Camioneta gris automática, cómoda y bien equipada. Una opción ideal para ciudad o carretera, con cámara de reversa y motor 1.5.",
     status: "Disponible",
@@ -257,6 +298,7 @@ export default function JPMVehiculosWeb() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminVehicleSearch, setAdminVehicleSearch] = useState("");
   const [adminForm, setAdminForm] = useState({ ...emptyForm });
   const [adminPhotos, setAdminPhotos] = useState([]);
   const [adminError, setAdminError] = useState("");
@@ -306,7 +348,7 @@ export default function JPMVehiculosWeb() {
   }, [vehicles, searchTerm, vehicleType, price]);
 
   const sortedVehicles = useMemo(() => {
-    const getKm = (vehicle) => Number(String(vehicle.km || "").replace(/[^0-9]/g, "")) || 0;
+    const getKm = (vehicle) => cleanNumber(vehicle.km);
 
     return [...filteredVehicles].sort((a, b) => {
       if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
@@ -317,6 +359,32 @@ export default function JPMVehiculosWeb() {
       return 0;
     });
   }, [filteredVehicles, sortOption]);
+
+  const adminFilteredVehicles = useMemo(() => {
+    const term = adminVehicleSearch.trim().toLowerCase();
+    const vehicleItems = vehicles.map((vehicle, index) => ({ vehicle, index }));
+
+    if (!term) return vehicleItems;
+
+    return vehicleItems.filter(({ vehicle }) => {
+      const detailsText = vehicle.details?.map((item) => `${item.label} ${item.value}`).join(" ") || "";
+      const searchableText = [
+        vehicle.name,
+        vehicle.type,
+        vehicle.price,
+        vehicle.year,
+        vehicle.km,
+        vehicle.fuel,
+        vehicle.city,
+        vehicle.status,
+        detailsText,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(term);
+    });
+  }, [vehicles, adminVehicleSearch]);
 
   function updateAdminField(field, value) {
     setAdminError("");
@@ -381,7 +449,7 @@ export default function JPMVehiculosWeb() {
       version: getDetailValue(vehicle, "Versión"),
       year: vehicle.year || "",
       price: String(vehicle.priceNumber || cleanPrice(vehicle.price)),
-      km: String(vehicle.km || "").replace(/ km/i, ""),
+      km: String(vehicle.km || "").replace(/[^0-9]/g, ""),
       fuel: vehicle.fuel || "Gasolina",
       city: vehicle.city || "Barranquilla",
       color: getDetailValue(vehicle, "Color"),
@@ -432,12 +500,14 @@ export default function JPMVehiculosWeb() {
       return;
     }
 
+    const formattedKm = `${formatKm(adminForm.km)} km`;
+
     const newVehicle = {
       name: adminForm.name,
       type: adminForm.type,
       priceNumber,
       year: adminForm.year,
-      km: `${adminForm.km} km`,
+      km: formattedKm,
       fuel: adminForm.fuel,
       price: money(priceNumber),
       city: adminForm.city,
@@ -457,7 +527,7 @@ export default function JPMVehiculosWeb() {
         version: adminForm.version,
         year: adminForm.year,
         price_number: priceNumber,
-        km: `${adminForm.km} km`,
+        km: formattedKm,
         fuel: adminForm.fuel,
         city: adminForm.city,
         color: adminForm.color,
@@ -722,8 +792,8 @@ export default function JPMVehiculosWeb() {
                     <FormInput value={adminForm.model} onChange={(value) => updateAdminField("model", value)} placeholder="Modelo" />
                     <FormInput value={adminForm.year} onChange={(value) => updateAdminField("year", value)} placeholder="Año" />
                     <FormInput value={adminForm.version} onChange={(value) => updateAdminField("version", value)} placeholder="Versión" />
-                    <FormInput value={adminForm.price} onChange={(value) => updateAdminField("price", value)} placeholder="Precio sin puntos" />
-                    <FormInput value={adminForm.km} onChange={(value) => updateAdminField("km", value)} placeholder="Kilómetros" />
+                    <FormInput value={adminForm.price} onChange={(value) => updateAdminField("price", value.replace(/[^0-9]/g, ""))} placeholder="Precio sin puntos" />
+                    <FormInput value={adminForm.km} onChange={(value) => updateAdminField("km", value.replace(/[^0-9]/g, ""))} placeholder="Kilómetros sin puntos" />
                     <FormInput value={adminForm.city} onChange={(value) => updateAdminField("city", value)} placeholder="Ciudad" />
                     <FormInput value={adminForm.color} onChange={(value) => updateAdminField("color", value)} placeholder="Color" />
                     <FormSelect value={adminForm.fuel} onChange={(value) => updateAdminField("fuel", value)}><option>Gasolina</option><option>Diésel</option><option>Híbrido</option><option>Eléctrico</option></FormSelect>
@@ -750,12 +820,7 @@ export default function JPMVehiculosWeb() {
                           {adminPhotos.map((photo, index) => (
                             <div key={index} className="relative">
                               <img src={photo.url || photo} alt="Vista previa" className="h-24 w-full rounded-2xl object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => removeAdminPhoto(index)}
-                                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow-lg hover:bg-red-700"
-                                aria-label="Eliminar foto"
-                              >
+                              <button type="button" onClick={() => removeAdminPhoto(index)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow-lg hover:bg-red-700" aria-label="Eliminar foto">
                                 ×
                               </button>
                             </div>
@@ -772,8 +837,20 @@ export default function JPMVehiculosWeb() {
 
                 <div className="rounded-[2rem] bg-zinc-950 p-6 text-white shadow-xl">
                   <h3 className="mb-4 text-2xl font-black">Vehículos cargados</h3>
-                  <div className="space-y-3">
-                    {vehicles.map((vehicle, index) => (
+
+                  <div className="mb-4 rounded-2xl bg-white px-4 py-3 text-zinc-950">
+                    <div className="flex items-center gap-3">
+                      <span className="text-zinc-500">🔎</span>
+                      <input value={adminVehicleSearch} onChange={(event) => setAdminVehicleSearch(event.target.value)} className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-500" placeholder="Buscar por marca, modelo, año, precio, ciudad..." />
+                    </div>
+                  </div>
+
+                  <p className="mb-4 text-sm text-zinc-400">
+                    {adminFilteredVehicles.length} de {vehicles.length} vehículo{vehicles.length === 1 ? "" : "s"}
+                  </p>
+
+                  <div className="max-h-[650px] space-y-3 overflow-y-auto pr-2">
+                    {adminFilteredVehicles.map(({ vehicle, index }) => (
                       <div key={(vehicle.dbId || vehicle.name) + index} className="rounded-2xl bg-white/10 p-4">
                         <div className="mb-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-zinc-950">{vehicle.status || "Disponible"}</div>
                         <p className="font-bold">{vehicle.name}</p>
@@ -784,6 +861,12 @@ export default function JPMVehiculosWeb() {
                         </div>
                       </div>
                     ))}
+
+                    {adminFilteredVehicles.length === 0 && (
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-sm text-zinc-400">
+                        No hay vehículos que coincidan con esa búsqueda.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -815,31 +898,13 @@ export default function JPMVehiculosWeb() {
               <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
                 <div className="bg-zinc-100 p-5">
                   <div className="relative">
-                    <img
-                    src={activePhoto || selectedVehicle.image}
-                    alt={selectedVehicle.name}
-                    className="h-[360px] w-full rounded-[1.5rem] object-cover"
-                  />
+                    <img src={activePhoto || selectedVehicle.image} alt={selectedVehicle.name} className="h-[360px] w-full rounded-[1.5rem] object-cover" />
                     <span className={"absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " + (selectedVehicle.status === "Vendido" ? "bg-red-600 text-white" : "bg-emerald-400 text-zinc-950")}>{selectedVehicle.status || "Disponible"}</span>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3">
                     {(selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).map((photo, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => setActivePhoto(photo)}
-                        className={
-                          "overflow-hidden rounded-2xl border-2 transition " +
-                          (activePhoto === photo
-                            ? "border-amber-400"
-                            : "border-transparent hover:border-zinc-300")
-                        }
-                      >
-                        <img
-                          src={photo}
-                          alt={`${selectedVehicle.name} ${index + 1}`}
-                          className="h-24 w-full object-cover"
-                        />
+                      <button key={index} type="button" onClick={() => setActivePhoto(photo)} className={"overflow-hidden rounded-2xl border-2 transition " + (activePhoto === photo ? "border-amber-400" : "border-transparent hover:border-zinc-300")}>
+                        <img src={photo} alt={`${selectedVehicle.name} ${index + 1}`} className="h-24 w-full object-cover" />
                       </button>
                     ))}
                   </div>
