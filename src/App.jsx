@@ -8,6 +8,7 @@ const supabaseKey = viteEnv.VITE_SUPABASE_ANON_KEY || viteEnv.VITE_SUPABASE_PUBL
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const FALLBACK_ADMIN_PASSWORD = "JPMontoya1041692941@";
+const VEHICLES_PER_PAGE = 9;
 
 const emptyForm = {
   name: "",
@@ -65,8 +66,7 @@ function money(value) {
 }
 
 function formatKm(value) {
-  const number = cleanNumber(value);
-  return new Intl.NumberFormat("es-CO").format(number);
+  return new Intl.NumberFormat("es-CO").format(cleanNumber(value));
 }
 
 function validateVehicleForm(form, photos) {
@@ -79,19 +79,29 @@ function validateVehicleForm(form, photos) {
     };
   }
 
-  if (cleanPrice(form.price) <= 0) {
-    return { ok: false, message: "El precio debe ser mayor a $0." };
-  }
-
-  if (cleanNumber(form.km) <= 0) {
-    return { ok: false, message: "El kilometraje debe ser mayor a 0." };
-  }
-
-  if (!photos || photos.length === 0) {
-    return { ok: false, message: "Debes subir al menos una foto del vehículo." };
-  }
+  if (cleanPrice(form.price) <= 0) return { ok: false, message: "El precio debe ser mayor a $0." };
+  if (cleanNumber(form.km) <= 0) return { ok: false, message: "El kilometraje debe ser mayor a 0." };
+  if (!photos || photos.length === 0) return { ok: false, message: "Debes subir al menos una foto del vehículo." };
 
   return { ok: true, message: "" };
+}
+
+function getPaginationItems(currentPage, totalPages) {
+  if (totalPages <= 1) return [];
+
+  const visiblePages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const pages = [...visiblePages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
+  const items = [];
+  let previousPage = 0;
+
+  for (const page of pages) {
+    if (page - previousPage === 2) items.push(previousPage + 1);
+    if (page - previousPage > 2) items.push(`ellipsis-${page}`);
+    items.push(page);
+    previousPage = page;
+  }
+
+  return items;
 }
 
 function runSelfTests() {
@@ -119,34 +129,31 @@ function runSelfTests() {
   console.assert(cleanNumber("40.000 km") === 40000, "Debe limpiar puntos y texto del kilometraje");
   console.assert(formatKm("40000") === "40.000", "Debe formatear kilometraje colombiano");
   console.assert(money(1000000) === "$1.000.000", "Debe formatear pesos colombianos");
+  console.assert(JSON.stringify(getPaginationItems(1, 1)) === JSON.stringify([]), "No debe paginar una sola página");
+  console.assert(JSON.stringify(getPaginationItems(1, 3)) === JSON.stringify([1, 2, 3]), "Debe mostrar páginas continuas cortas");
+  console.assert(JSON.stringify(getPaginationItems(5, 10)) === JSON.stringify([1, "ellipsis-4", 4, 5, 6, "ellipsis-10", 10]), "Debe mostrar elipsis en paginación larga");
 }
 runSelfTests();
 
 function setMetaTag(name, content) {
   if (typeof document === "undefined") return;
-
   let tag = document.querySelector(`meta[name="${name}"]`);
-
   if (!tag) {
     tag = document.createElement("meta");
     tag.setAttribute("name", name);
     document.head.appendChild(tag);
   }
-
   tag.setAttribute("content", content);
 }
 
 function setCanonicalUrl(url) {
   if (typeof document === "undefined") return;
-
   let link = document.querySelector('link[rel="canonical"]');
-
   if (!link) {
     link = document.createElement("link");
     link.setAttribute("rel", "canonical");
     document.head.appendChild(link);
   }
-
   link.setAttribute("href", url);
 }
 
@@ -318,6 +325,7 @@ export default function JPMVehiculosWeb() {
   const [searchTerm, setSearchTerm] = useState("");
   const [vehicleType, setVehicleType] = useState("Todos");
   const [price, setPrice] = useState(1000000000);
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortOption, setSortOption] = useState("recientes");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [activePhoto, setActivePhoto] = useState("");
@@ -351,10 +359,7 @@ export default function JPMVehiculosWeb() {
 
   useEffect(() => {
     document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
-    setMetaTag(
-      "description",
-      "JPM Vehículos es una compraventa de vehículos en Barranquilla. Encuentra carros, camionetas y motos disponibles con asesoría directa por WhatsApp."
-    );
+    setMetaTag("description", "JPM Vehículos es una compraventa de vehículos en Barranquilla. Encuentra carros, camionetas y motos disponibles con asesoría directa por WhatsApp.");
     setMetaTag("keywords", "JPM Vehículos, jpmvehiculos, jpmvehiculos.com, compra de carros en Barranquilla, venta de vehículos en Barranquilla, carros usados Barranquilla");
     setCanonicalUrl("https://jpmvehiculos.com/");
   }, []);
@@ -370,10 +375,12 @@ export default function JPMVehiculosWeb() {
   }, []);
 
   useEffect(() => {
-    if (selectedVehicle) {
-      setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
-    }
+    if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
   }, [selectedVehicle]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, vehicleType, price, sortOption]);
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
@@ -398,6 +405,21 @@ export default function JPMVehiculosWeb() {
     });
   }, [filteredVehicles, sortOption]);
 
+  const totalPages = Math.ceil(sortedVehicles.length / VEHICLES_PER_PAGE);
+  const paginationItems = useMemo(() => getPaginationItems(currentPage, totalPages), [currentPage, totalPages]);
+  const firstVisibleVehicle = sortedVehicles.length === 0 ? 0 : (currentPage - 1) * VEHICLES_PER_PAGE + 1;
+  const lastVisibleVehicle = Math.min(currentPage * VEHICLES_PER_PAGE, sortedVehicles.length);
+
+  const paginatedVehicles = useMemo(() => {
+    const start = (currentPage - 1) * VEHICLES_PER_PAGE;
+    const end = start + VEHICLES_PER_PAGE;
+    return sortedVehicles.slice(start, end);
+  }, [sortedVehicles, currentPage]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
   const adminFilteredVehicles = useMemo(() => {
     const term = adminVehicleSearch.trim().toLowerCase();
     const vehicleItems = vehicles.map((vehicle, index) => ({ vehicle, index }));
@@ -406,20 +428,7 @@ export default function JPMVehiculosWeb() {
 
     return vehicleItems.filter(({ vehicle }) => {
       const detailsText = vehicle.details?.map((item) => `${item.label} ${item.value}`).join(" ") || "";
-      const searchableText = [
-        vehicle.name,
-        vehicle.type,
-        vehicle.price,
-        vehicle.year,
-        vehicle.km,
-        vehicle.fuel,
-        vehicle.city,
-        vehicle.status,
-        detailsText,
-      ]
-        .join(" ")
-        .toLowerCase();
-
+      const searchableText = [vehicle.name, vehicle.type, vehicle.price, vehicle.year, vehicle.km, vehicle.fuel, vehicle.city, vehicle.status, detailsText].join(" ").toLowerCase();
       return searchableText.includes(term);
     });
   }, [vehicles, adminVehicleSearch]);
@@ -539,7 +548,6 @@ export default function JPMVehiculosWeb() {
     }
 
     const formattedKm = `${formatKm(adminForm.km)} km`;
-
     const newVehicle = {
       name: adminForm.name,
       type: adminForm.type,
@@ -582,10 +590,7 @@ export default function JPMVehiculosWeb() {
       };
 
       const vehicleToEdit = editingIndex !== null ? vehicles[editingIndex] : null;
-      const request = vehicleToEdit?.dbId
-        ? supabase.from("vehicles").update(payload).eq("id", vehicleToEdit.dbId)
-        : supabase.from("vehicles").insert(payload);
-
+      const request = vehicleToEdit?.dbId ? supabase.from("vehicles").update(payload).eq("id", vehicleToEdit.dbId) : supabase.from("vehicles").insert(payload);
       const { error } = await request;
 
       if (error) {
@@ -630,7 +635,6 @@ export default function JPMVehiculosWeb() {
   function openAdminLogin() {
     const nextClicks = footerClicks + 1;
     setFooterClicks(nextClicks);
-
     if (nextClicks >= 7) {
       setShowAdminLogin(true);
       setFooterClicks(0);
@@ -646,10 +650,7 @@ export default function JPMVehiculosWeb() {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: adminEmail.trim(),
-        password: adminPassword,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email: adminEmail.trim(), password: adminPassword });
 
       if (error) {
         console.error(error);
@@ -765,9 +766,56 @@ export default function JPMVehiculosWeb() {
             <h2 className="text-4xl font-black tracking-tight md:text-5xl">Vehículos disponibles</h2>
             <p className="mt-3 text-zinc-400">{filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} encontrado{filteredVehicles.length === 1 ? "" : "s"}</p>
           </div>
+
           <div className="grid gap-6 md:grid-cols-3">
-            {sortedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={setSelectedVehicle} />)}
+            {paginatedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={setSelectedVehicle} />)}
           </div>
+
+          {totalPages > 1 && (
+            <div className="mt-12 rounded-[2rem] border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Catálogo paginado</p>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Mostrando <span className="font-bold text-white">{firstVisibleVehicle}-{lastVisibleVehicle}</span> de <span className="font-bold text-white">{sortedVehicles.length}</span> vehículos
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
+                    « Primero
+                  </button>
+                  <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
+                    ← Anterior
+                  </button>
+
+                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1">
+                    {paginationItems.map((item) =>
+                      typeof item === "string" ? (
+                        <span key={item} className="flex h-10 min-w-10 items-center justify-center px-2 text-sm font-black text-zinc-500">…</span>
+                      ) : (
+                        <button key={item} onClick={() => setCurrentPage(item)} className={"h-10 min-w-10 rounded-full px-3 text-sm font-black transition " + (currentPage === item ? "bg-amber-300 text-zinc-950 shadow-lg shadow-amber-300/20" : "text-zinc-300 hover:bg-white/10 hover:text-white")}>
+                          {item}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
+                    Siguiente →
+                  </button>
+                  <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
+                    Último »
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-amber-300 transition-all duration-300" style={{ width: `${(currentPage / totalPages) * 100}%` }} />
+              </div>
+            </div>
+          )}
+
           {filteredVehicles.length === 0 && <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center text-zinc-300">No encontramos vehículos con esos filtros. Prueba con otra marca, tipo o sube el precio.</div>}
         </section>
 
@@ -820,45 +868,178 @@ export default function JPMVehiculosWeb() {
                     {editingIndex !== null && <button type="button" onClick={cancelEdit} className="rounded-full border border-black/20 bg-white px-4 py-2 text-sm font-bold text-zinc-950">Cancelar edición</button>}
                   </div>
 
-                  {adminError && <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{adminError}</div>}
+                                    {adminError && (
+                    <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                      {adminError}
+                    </div>
+                  )}
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <FormInput value={adminForm.name} onChange={(value) => updateAdminField("name", value)} placeholder="Nombre completo del vehículo" />
-                    <FormSelect value={adminForm.type} onChange={(value) => updateAdminField("type", value)}><option>Carro</option><option>Camioneta</option><option>Moto</option></FormSelect>
-                    <FormSelect value={adminForm.status} onChange={(value) => updateAdminField("status", value)}><option>Disponible</option><option>Vendido</option></FormSelect>
-                    <FormInput value={adminForm.brand} onChange={(value) => updateAdminField("brand", value)} placeholder="Marca" />
-                    <FormInput value={adminForm.model} onChange={(value) => updateAdminField("model", value)} placeholder="Modelo" />
-                    <FormInput value={adminForm.year} onChange={(value) => updateAdminField("year", value)} placeholder="Año" />
-                    <FormInput value={adminForm.version} onChange={(value) => updateAdminField("version", value)} placeholder="Versión" />
-                    <FormInput value={adminForm.price} onChange={(value) => updateAdminField("price", value.replace(/[^0-9]/g, ""))} placeholder="Precio sin puntos" />
-                    <FormInput value={adminForm.km} onChange={(value) => updateAdminField("km", value.replace(/[^0-9]/g, ""))} placeholder="Kilómetros sin puntos" />
-                    <FormInput value={adminForm.city} onChange={(value) => updateAdminField("city", value)} placeholder="Ciudad" />
-                    <FormInput value={adminForm.color} onChange={(value) => updateAdminField("color", value)} placeholder="Color" />
-                    <FormSelect value={adminForm.fuel} onChange={(value) => updateAdminField("fuel", value)}><option>Gasolina</option><option>Diésel</option><option>Híbrido</option><option>Eléctrico</option></FormSelect>
-                    <FormSelect value={adminForm.transmission} onChange={(value) => updateAdminField("transmission", value)}><option>Automática</option><option>Mecánica</option><option>Por confirmar</option></FormSelect>
-                    <FormInput value={adminForm.motor} onChange={(value) => updateAdminField("motor", value)} placeholder="Motor" />
-                    <FormInput value={adminForm.doors} onChange={(value) => updateAdminField("doors", value)} placeholder="Puertas" />
-                    <FormInput value={adminForm.bodyType} onChange={(value) => updateAdminField("bodyType", value)} placeholder="Tipo de carrocería" />
-                    <FormInput value={adminForm.plateLastDigit} onChange={(value) => updateAdminField("plateLastDigit", value)} placeholder="Último dígito de la placa" />
+                    <FormInput
+                      value={adminForm.name}
+                      onChange={(value) => updateAdminField("name", value)}
+                      placeholder="Nombre completo del vehículo"
+                    />
+
+                    <FormSelect
+                      value={adminForm.type}
+                      onChange={(value) => updateAdminField("type", value)}
+                    >
+                      <option>Carro</option>
+                      <option>Camioneta</option>
+                      <option>Moto</option>
+                    </FormSelect>
+
+                    <FormSelect
+                      value={adminForm.status}
+                      onChange={(value) => updateAdminField("status", value)}
+                    >
+                      <option>Disponible</option>
+                      <option>Vendido</option>
+                    </FormSelect>
+
+                    <FormInput
+                      value={adminForm.brand}
+                      onChange={(value) => updateAdminField("brand", value)}
+                      placeholder="Marca"
+                    />
+
+                    <FormInput
+                      value={adminForm.model}
+                      onChange={(value) => updateAdminField("model", value)}
+                      placeholder="Modelo"
+                    />
+
+                    <FormInput
+                      value={adminForm.year}
+                      onChange={(value) => updateAdminField("year", value)}
+                      placeholder="Año"
+                    />
+
+                    <FormInput
+                      value={adminForm.version}
+                      onChange={(value) => updateAdminField("version", value)}
+                      placeholder="Versión"
+                    />
+
+                    <FormInput
+                      value={adminForm.price}
+                      onChange={(value) => updateAdminField("price", value.replace(/[^0-9]/g, ""))}
+                      placeholder="Precio sin puntos"
+                    />
+
+                    <FormInput
+                      value={adminForm.km}
+                      onChange={(value) => updateAdminField("km", value.replace(/[^0-9]/g, ""))}
+                      placeholder="Kilómetros sin puntos"
+                    />
+
+                    <FormInput
+                      value={adminForm.city}
+                      onChange={(value) => updateAdminField("city", value)}
+                      placeholder="Ciudad"
+                    />
+
+                    <FormInput
+                      value={adminForm.color}
+                      onChange={(value) => updateAdminField("color", value)}
+                      placeholder="Color"
+                    />
+
+                    <FormSelect
+                      value={adminForm.fuel}
+                      onChange={(value) => updateAdminField("fuel", value)}
+                    >
+                      <option>Gasolina</option>
+                      <option>Diésel</option>
+                      <option>Híbrido</option>
+                      <option>Eléctrico</option>
+                    </FormSelect>
+
+                    <FormSelect
+                      value={adminForm.transmission}
+                      onChange={(value) => updateAdminField("transmission", value)}
+                    >
+                      <option>Automática</option>
+                      <option>Mecánica</option>
+                      <option>Por confirmar</option>
+                    </FormSelect>
+
+                    <FormInput
+                      value={adminForm.motor}
+                      onChange={(value) => updateAdminField("motor", value)}
+                      placeholder="Motor"
+                    />
+
+                    <FormInput
+                      value={adminForm.doors}
+                      onChange={(value) => updateAdminField("doors", value)}
+                      placeholder="Puertas"
+                    />
+
+                    <FormInput
+                      value={adminForm.bodyType}
+                      onChange={(value) => updateAdminField("bodyType", value)}
+                      placeholder="Tipo de carrocería"
+                    />
+
+                    <FormInput
+                      value={adminForm.plateLastDigit}
+                      onChange={(value) => updateAdminField("plateLastDigit", value)}
+                      placeholder="Último dígito de la placa"
+                    />
                   </div>
 
-                  <textarea value={adminForm.description} onChange={(event) => updateAdminField("description", event.target.value)} className="mt-4 min-h-28 w-full rounded-2xl bg-white px-4 py-3 outline-none" placeholder="Descripción del vehículo" />
+                  <textarea
+                    value={adminForm.description}
+                    onChange={(event) => updateAdminField("description", event.target.value)}
+                    className="mt-4 min-h-28 w-full rounded-2xl bg-white px-4 py-3 outline-none"
+                    placeholder="Descripción del vehículo"
+                  />
 
                   <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-white p-5">
                     <label className="mb-3 block font-bold">Fotos del vehículo</label>
-                    <input type="file" accept="image/*" multiple onChange={handleAdminPhotos} className="w-full text-sm" />
-                    <p className="mt-2 text-sm text-zinc-500">Puedes seleccionar varias fotos. La primera será la principal.</p>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAdminPhotos}
+                      className="w-full text-sm"
+                    />
+
+                    <p className="mt-2 text-sm text-zinc-500">
+                      Puedes seleccionar varias fotos. La primera será la principal.
+                    </p>
+
                     {adminPhotos.length > 0 && (
                       <div>
                         <div className="mt-4 flex items-center justify-between gap-3">
-                          <p className="text-sm font-bold text-zinc-700">{adminPhotos.length} foto{adminPhotos.length === 1 ? "" : "s"} cargada{adminPhotos.length === 1 ? "" : "s"}</p>
-                          <span className="text-xs font-semibold text-zinc-500">Elimina una foto con la X</span>
+                          <p className="text-sm font-bold text-zinc-700">
+                            {adminPhotos.length} foto{adminPhotos.length === 1 ? "" : "s"} cargada
+                            {adminPhotos.length === 1 ? "" : "s"}
+                          </p>
+
+                          <span className="text-xs font-semibold text-zinc-500">
+                            Elimina una foto con la X
+                          </span>
                         </div>
+
                         <div className="mt-4 grid grid-cols-3 gap-3">
                           {adminPhotos.map((photo, index) => (
                             <div key={index} className="relative">
-                              <img src={photo.url || photo} alt="Vista previa" className="h-24 w-full rounded-2xl object-cover" />
-                              <button type="button" onClick={() => removeAdminPhoto(index)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow-lg hover:bg-red-700" aria-label="Eliminar foto">
+                              <img
+                                src={photo.url || photo}
+                                alt="Vista previa"
+                                className="h-24 w-full rounded-2xl object-cover"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => removeAdminPhoto(index)}
+                                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow-lg hover:bg-red-700"
+                                aria-label="Eliminar foto"
+                              >
                                 ×
                               </button>
                             </div>
@@ -868,8 +1049,16 @@ export default function JPMVehiculosWeb() {
                     )}
                   </div>
 
-                  <button type="submit" disabled={isSaving} className="mt-5 h-12 w-full rounded-full bg-zinc-950 font-bold text-white disabled:opacity-60">
-                    {isSaving ? "Guardando..." : editingIndex !== null ? "Actualizar publicación" : "Guardar vehículo"}
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="mt-5 h-12 w-full rounded-full bg-zinc-950 font-bold text-white disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Guardando..."
+                      : editingIndex !== null
+                        ? "Actualizar publicación"
+                        : "Guardar vehículo"}
                   </button>
                 </form>
 
@@ -879,23 +1068,50 @@ export default function JPMVehiculosWeb() {
                   <div className="mb-4 rounded-2xl bg-white px-4 py-3 text-zinc-950">
                     <div className="flex items-center gap-3">
                       <span className="text-zinc-500">🔎</span>
-                      <input value={adminVehicleSearch} onChange={(event) => setAdminVehicleSearch(event.target.value)} className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-500" placeholder="Buscar por marca, modelo, año, precio, ciudad..." />
+
+                      <input
+                        value={adminVehicleSearch}
+                        onChange={(event) => setAdminVehicleSearch(event.target.value)}
+                        className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-500"
+                        placeholder="Buscar por marca, modelo, año, precio, ciudad..."
+                      />
                     </div>
                   </div>
 
                   <p className="mb-4 text-sm text-zinc-400">
-                    {adminFilteredVehicles.length} de {vehicles.length} vehículo{vehicles.length === 1 ? "" : "s"}
+                    {adminFilteredVehicles.length} de {vehicles.length} vehículo
+                    {vehicles.length === 1 ? "" : "s"}
                   </p>
 
                   <div className="max-h-[650px] space-y-3 overflow-y-auto pr-2">
                     {adminFilteredVehicles.map(({ vehicle, index }) => (
-                      <div key={(vehicle.dbId || vehicle.name) + index} className="rounded-2xl bg-white/10 p-4">
-                        <div className="mb-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-zinc-950">{vehicle.status || "Disponible"}</div>
+                      <div
+                        key={(vehicle.dbId || vehicle.name) + index}
+                        className="rounded-2xl bg-white/10 p-4"
+                      >
+                        <div className="mb-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-zinc-950">
+                          {vehicle.status || "Disponible"}
+                        </div>
+
                         <p className="font-bold">{vehicle.name}</p>
-                        <p className="text-sm text-zinc-400">{vehicle.price} · {vehicle.year}</p>
+                        <p className="text-sm text-zinc-400">
+                          {vehicle.price} · {vehicle.year}
+                        </p>
+
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <button onClick={() => editVehicle(vehicle, index)} className="rounded-full bg-amber-300 px-4 py-2 text-sm font-bold text-zinc-950">Editar</button>
-                          <button onClick={() => deleteVehicle(vehicle, index)} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950">Eliminar</button>
+                          <button
+                            onClick={() => editVehicle(vehicle, index)}
+                            className="rounded-full bg-amber-300 px-4 py-2 text-sm font-bold text-zinc-950"
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            onClick={() => deleteVehicle(vehicle, index)}
+                            className="rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950"
+                          >
+                            Eliminar
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -909,21 +1125,65 @@ export default function JPMVehiculosWeb() {
                 </div>
               </div>
 
-              <button onClick={closeAdmin} className="mt-8 rounded-full bg-zinc-950 px-6 py-3 font-bold text-white">Cerrar panel admin</button>
+              <button
+                onClick={closeAdmin}
+                className="mt-8 rounded-full bg-zinc-950 px-6 py-3 font-bold text-white"
+              >
+                Cerrar panel admin
+              </button>
             </div>
           </section>
         )}
 
         {showAdminLogin && (
           <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 px-5 backdrop-blur-sm">
-            <form onSubmit={loginAdmin} className="w-full max-w-md rounded-[2rem] bg-white p-6 text-zinc-950 shadow-2xl">
+            <form
+              onSubmit={loginAdmin}
+              className="w-full max-w-md rounded-[2rem] bg-white p-6 text-zinc-950 shadow-2xl"
+            >
               <h3 className="text-3xl font-black">Acceso administrador</h3>
-              <p className="mt-2 text-zinc-600">{supabase ? "Ingresa tu correo y contraseña de Supabase Auth." : "Supabase no está conectado. Usa la contraseña temporal."}</p>
-              {supabase && <input type="email" value={adminEmail} onChange={(event) => setAdminEmail(event.target.value)} className="mt-5 w-full rounded-2xl bg-zinc-100 px-4 py-3 outline-none" placeholder="Correo admin" autoFocus />}
-              <input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} className="mt-3 w-full rounded-2xl bg-zinc-100 px-4 py-3 outline-none" placeholder="Contraseña" autoFocus={!supabase} />
+
+              <p className="mt-2 text-zinc-600">
+                {supabase
+                  ? "Ingresa tu correo y contraseña de Supabase Auth."
+                  : "Supabase no está conectado. Usa la contraseña temporal."}
+              </p>
+
+              {supabase && (
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(event) => setAdminEmail(event.target.value)}
+                  className="mt-5 w-full rounded-2xl bg-zinc-100 px-4 py-3 outline-none"
+                  placeholder="Correo admin"
+                  autoFocus
+                />
+              )}
+
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(event) => setAdminPassword(event.target.value)}
+                className="mt-3 w-full rounded-2xl bg-zinc-100 px-4 py-3 outline-none"
+                placeholder="Contraseña"
+                autoFocus={!supabase}
+              />
+
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <button type="submit" className="h-12 rounded-full bg-zinc-950 font-bold text-white">Entrar</button>
-                <button type="button" onClick={() => setShowAdminLogin(false)} className="h-12 rounded-full border border-black/20 bg-white font-bold text-zinc-950">Cancelar</button>
+                <button
+                  type="submit"
+                  className="h-12 rounded-full bg-zinc-950 font-bold text-white"
+                >
+                  Entrar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAdminLogin(false)}
+                  className="h-12 rounded-full border border-black/20 bg-white font-bold text-zinc-950"
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
           </div>
@@ -932,29 +1192,86 @@ export default function JPMVehiculosWeb() {
         {selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-5 py-8 backdrop-blur-sm">
             <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white text-zinc-950 shadow-2xl">
-              <button onClick={() => setSelectedVehicle(null)} className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black text-2xl font-bold text-white">×</button>
+              <button
+                onClick={() => setSelectedVehicle(null)}
+                className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black text-2xl font-bold text-white"
+              >
+                ×
+              </button>
+
               <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
                 <div className="bg-zinc-100 p-5">
                   <div className="relative">
-                    <img src={activePhoto || selectedVehicle.image} alt={selectedVehicle.name} className="h-[360px] w-full rounded-[1.5rem] object-cover" />
-                    <span className={"absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " + (selectedVehicle.status === "Vendido" ? "bg-red-600 text-white" : "bg-emerald-400 text-zinc-950")}>{selectedVehicle.status || "Disponible"}</span>
+                    <img
+                      src={activePhoto || selectedVehicle.image}
+                      alt={selectedVehicle.name}
+                      className="h-[360px] w-full rounded-[1.5rem] object-cover"
+                    />
+
+                    <span
+                      className={
+                        "absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " +
+                        (selectedVehicle.status === "Vendido"
+                          ? "bg-red-600 text-white"
+                          : "bg-emerald-400 text-zinc-950")
+                      }
+                    >
+                      {selectedVehicle.status || "Disponible"}
+                    </span>
                   </div>
+
                   <div className="mt-4 grid grid-cols-3 gap-3">
-                    {(selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).map((photo, index) => (
-                      <button key={index} type="button" onClick={() => setActivePhoto(photo)} className={"overflow-hidden rounded-2xl border-2 transition " + (activePhoto === photo ? "border-amber-400" : "border-transparent hover:border-zinc-300")}>
-                        <img src={photo} alt={`${selectedVehicle.name} ${index + 1}`} className="h-24 w-full object-cover" />
+                    {(selectedVehicle.photos?.length
+                      ? selectedVehicle.photos
+                      : [selectedVehicle.image]
+                    ).map((photo, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setActivePhoto(photo)}
+                        className={
+                          "overflow-hidden rounded-2xl border-2 transition " +
+                          (activePhoto === photo
+                            ? "border-amber-400"
+                            : "border-transparent hover:border-zinc-300")
+                        }
+                      >
+                        <img
+                          src={photo}
+                          alt={`${selectedVehicle.name} ${index + 1}`}
+                          className="h-24 w-full object-cover"
+                        />
                       </button>
                     ))}
                   </div>
                 </div>
+
                 <div className="p-6 md:p-8">
-                  <p className="mb-2 text-sm font-bold uppercase tracking-[0.28em] text-zinc-500">Detalle del vehículo</p>
-                  <h3 className="text-4xl font-black tracking-tight">{selectedVehicle.name}</h3>
-                  <p className="mt-3 text-3xl font-black text-amber-500">{selectedVehicle.price}</p>
-                  <p className="mt-5 text-lg leading-8 text-zinc-600">{selectedVehicle.description}</p>
+                  <p className="mb-2 text-sm font-bold uppercase tracking-[0.28em] text-zinc-500">
+                    Detalle del vehículo
+                  </p>
+
+                  <h3 className="text-4xl font-black tracking-tight">
+                    {selectedVehicle.name}
+                  </h3>
+
+                  <p className="mt-3 text-3xl font-black text-amber-500">
+                    {selectedVehicle.price}
+                  </p>
+
+                  <p className="mt-5 text-lg leading-8 text-zinc-600">
+                    {selectedVehicle.description}
+                  </p>
+
                   <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-zinc-200">
                     {selectedVehicle.details?.map((item, index) => (
-                      <div key={item.label} className={"grid grid-cols-2 gap-4 px-5 py-4 " + (index % 2 === 0 ? "bg-zinc-100" : "bg-white")}>
+                      <div
+                        key={item.label}
+                        className={
+                          "grid grid-cols-2 gap-4 px-5 py-4 " +
+                          (index % 2 === 0 ? "bg-zinc-100" : "bg-white")
+                        }
+                      >
                         <p className="font-bold text-zinc-950">{item.label}</p>
                         <p className="text-zinc-700">{item.value}</p>
                       </div>
@@ -968,7 +1285,9 @@ export default function JPMVehiculosWeb() {
       </main>
 
       <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
-        <button onClick={openAdminLogin} className="cursor-default select-none">© 2026 JPM Vehículos. Compra y venta de vehículos.</button>
+        <button onClick={openAdminLogin} className="cursor-default select-none">
+          © 2026 JPM Vehículos. Compra y venta de vehículos.
+        </button>
       </footer>
 
       <Analytics />
