@@ -122,6 +122,34 @@ function runSelfTests() {
 }
 runSelfTests();
 
+function setMetaTag(name, content) {
+  if (typeof document === "undefined") return;
+
+  let tag = document.querySelector(`meta[name="${name}"]`);
+
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute("name", name);
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute("content", content);
+}
+
+function setCanonicalUrl(url) {
+  if (typeof document === "undefined") return;
+
+  let link = document.querySelector('link[rel="canonical"]');
+
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", "canonical");
+    document.head.appendChild(link);
+  }
+
+  link.setAttribute("href", url);
+}
+
 function detailsFromForm(form) {
   return [
     { label: "Marca", value: form.brand },
@@ -320,6 +348,16 @@ export default function JPMVehiculosWeb() {
 
     setVehicles((data || []).map(vehicleFromSupabase));
   }
+
+  useEffect(() => {
+    document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
+    setMetaTag(
+      "description",
+      "JPM Vehículos es una compraventa de vehículos en Barranquilla. Encuentra carros, camionetas y motos disponibles con asesoría directa por WhatsApp."
+    );
+    setMetaTag("keywords", "JPM Vehículos, jpmvehiculos, jpmvehiculos.com, compra de carros en Barranquilla, venta de vehículos en Barranquilla, carros usados Barranquilla");
+    setCanonicalUrl("https://jpmvehiculos.com/");
+  }, []);
 
   useEffect(() => {
     fetchVehicles();
@@ -671,8 +709,8 @@ export default function JPMVehiculosWeb() {
         <section id="inicio" className="relative overflow-hidden bg-white pt-28 text-zinc-950">
           <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:px-8 lg:py-28">
             <div className="text-left">
-              <h1 className="max-w-2xl text-5xl font-black leading-tight tracking-tight md:text-7xl">Encuentra tu próximo vehículo con confianza.</h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-600">En JPM Vehículos te ayudamos a comprar o vender tu carro de manera rápida, clara y segura, con atención personalizada y opciones seleccionadas.</p>
+              <h1 className="max-w-2xl text-5xl font-black leading-tight tracking-tight md:text-7xl">JPM Vehículos: compra y venta de vehículos en Barranquilla.</h1>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-600">En JPM Vehículos, también conocido como jpmvehiculos.com, te ayudamos a comprar o vender tu carro, camioneta o moto de manera rápida, clara y segura, con atención personalizada en Barranquilla.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button href="#vehiculos" className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
                 <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
@@ -738,7 +776,7 @@ export default function JPMVehiculosWeb() {
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Por qué elegirnos</p>
               <h2 className="text-4xl font-black tracking-tight md:text-5xl">Una compraventa pensada para hacerlo fácil.</h2>
-              <p className="mt-5 text-lg leading-8 text-zinc-600">JPM Vehículos nace para conectar compradores y vendedores con un proceso más claro, visual y directo.</p>
+              <p className="mt-5 text-lg leading-8 text-zinc-600">JPM Vehículos nace en Barranquilla para conectar compradores y vendedores de carros, camionetas y motos con un proceso más claro, visual y directo.</p>
             </div>
             <div className="grid gap-5 md:grid-cols-3">
               <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Compra segura</h3><p className="text-sm leading-6 text-zinc-600">Información clara, fotos visibles y asesoría.</p></div>
@@ -751,7 +789,7 @@ export default function JPMVehiculosWeb() {
         <section id="vender" className="mx-auto max-w-4xl px-5 py-20 lg:px-8">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Contacta y vende</p>
           <h2 className="text-4xl font-black tracking-tight md:text-5xl">Habla con nosotros y vende tu vehículo.</h2>
-          <p className="mt-5 text-lg leading-8 text-zinc-300">En un solo lugar puedes enviarnos los datos de tu vehículo, pedir asesoría o consultar disponibilidad.</p>
+          <p className="mt-5 text-lg leading-8 text-zinc-300">En jpmvehiculos.com puedes enviarnos los datos de tu vehículo, pedir asesoría o consultar disponibilidad de carros, camionetas y motos en Barranquilla.</p>
           <div id="contacto" className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-6">
             <h3 className="mb-4 text-2xl font-bold">Contacto directo</h3>
             <div className="space-y-4 text-zinc-300">
@@ -930,7 +968,7 @@ export default function JPMVehiculosWeb() {
       </main>
 
       <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
-        <button onClick={openAdminLogin} className="cursor-default select-none">© 2026 JPM Vehículos. Compra y venta de vehículos.</button>
+        <button onClick={openAdminLogin} className="cursor-default select-none">©2026 JPM Vehículos. Compra y venta de vehículos.</button>
       </footer>
 
       <Analytics />
