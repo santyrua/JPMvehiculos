@@ -968,7 +968,7 @@ export default function JPMVehiculosWeb() {
       </main>
 
       <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
-        <button onClick={openAdminLogin} className="cursor-default select-none">©2026 JPM Vehículos. Compra y venta de vehículos.</button>
+        <button onClick={openAdminLogin} className="cursor-default select-none">© 2026 JPM Vehículos. Compra y venta de vehículos.</button>
       </footer>
 
       <Analytics />
