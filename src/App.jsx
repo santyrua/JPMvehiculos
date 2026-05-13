@@ -248,16 +248,12 @@ const starterVehicles = [
 
 function LogoCard() {
   return (
-    <div className="rounded-[2rem] bg-black p-8 text-center text-white shadow-2xl">
-      <svg viewBox="0 0 420 150" className="mx-auto mb-8 w-full max-w-[360px]" aria-label="Logo JPM Vehículos">
-        <path d="M55 88 L93 88 L126 58 L220 58 L265 88 L342 94 Q367 96 367 117 L367 125 L347 125" fill="none" stroke="white" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M55 88 L45 88 L45 112 L58 125" fill="none" stroke="white" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="105" cy="125" r="25" fill="black" stroke="white" strokeWidth="10" />
-        <circle cx="310" cy="125" r="25" fill="black" stroke="white" strokeWidth="10" />
-        <line x1="150" y1="125" x2="260" y2="125" stroke="white" strokeWidth="10" strokeLinecap="round" />
-      </svg>
-      <h2 className="text-5xl font-black italic leading-none tracking-tight">JPM VEHÍCULOS</h2>
-      <p className="mt-6 text-xs font-bold uppercase tracking-[0.35em]">Siempre marcando la diferencia</p>
+    <div className="overflow-hidden rounded-[2rem] bg-black shadow-2xl">
+      <img
+        src="/jpm-logo.jpeg"
+        alt="JPM Vehículos - Siempre marcando la diferencia"
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }
