@@ -250,7 +250,7 @@ function LogoCard() {
   return (
     <div className="overflow-hidden rounded-[2rem] bg-black shadow-2xl">
       <img
-        src="/jpm-logo.jpeg"
+        src="/jpm-logo.jpeg.jpg"
         alt="JPM Vehículos - Siempre marcando la diferencia"
         className="h-full w-full object-cover"
       />
