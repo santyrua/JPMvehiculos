@@ -718,7 +718,7 @@ export default function JPMVehiculosWeb() {
                 <div><p className="text-3xl font-black">100%</p><p className="text-sm text-zinc-500">Asesoría directa</p></div>
               </div>
             </div>
-            <div className="flex justify-center lg:justify-end"><LogoCard /></div>
+            <div className="flex justify-center lg:justify-end lg:translate-x-16 xl:translate-x-24"><LogoCard /></div>
           </div>
         </section>
 
