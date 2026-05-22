@@ -316,6 +316,16 @@ function VehicleCard({ vehicle, onOpen }) {
 }
 
 export default function JPMVehiculosWeb() {
+  function isEcoVehicle(vehicle) {
+    const fuel = String(vehicle.fuel || "").toLowerCase();
+
+    return (
+      fuel === "híbrido" ||
+      fuel === "hibrido" ||
+      fuel === "eléctrico" ||
+      fuel === "electrico"
+    );
+  }
   const [vehicles, setVehicles] = useState(starterVehicles);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -380,12 +390,17 @@ export default function JPMVehiculosWeb() {
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
-      const matchesSearch = vehicle.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = vehicle.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
       const matchesType = vehicleType === "Todos" || vehicle.type === vehicleType;
       const matchesPrice = vehicle.priceNumber <= price;
-      return matchesSearch && matchesType && matchesPrice;
+      const matchesEco = sortOption !== "eco" || isEcoVehicle(vehicle);
+
+      return matchesSearch && matchesType && matchesPrice && matchesEco;
     });
-  }, [vehicles, searchTerm, vehicleType, price]);
+  }, [vehicles, searchTerm, vehicleType, price, sortOption]);
 
   const sortedVehicles = useMemo(() => {
     const getKm = (vehicle) => cleanNumber(vehicle.km);
@@ -401,16 +416,6 @@ export default function JPMVehiculosWeb() {
 
      if (aIsSold && !bIsSold) return 1;
      if (!aIsSold && bIsSold) return -1;
-
-     if (sortOption === "eco") {
-       const aIsEco = isEco(a);
-       const bIsEco = isEco(b);
-
-       if (aIsEco && !bIsEco) return -1;
-       if (!aIsEco && bIsEco) return 1;
-       return 0;
-     }
-
      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
      if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
      if (sortOption === "anio-nuevo") return Number(b.year) - Number(a.year);
