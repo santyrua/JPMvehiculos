@@ -390,14 +390,21 @@ export default function JPMVehiculosWeb() {
   const sortedVehicles = useMemo(() => {
     const getKm = (vehicle) => cleanNumber(vehicle.km);
 
-    return [...filteredVehicles].sort((a, b) => {
-      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
-      if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
-      if (sortOption === "anio-nuevo") return Number(b.year) - Number(a.year);
-      if (sortOption === "anio-antiguo") return Number(a.year) - Number(b.year);
-      if (sortOption === "km-menor") return getKm(a) - getKm(b);
-      return 0;
-    });
+   return [...filteredVehicles].sort((a, b) => {
+     const aIsSold = a.status === "Vendido";
+     const bIsSold = b.status === "Vendido";
+
+     if (aIsSold && !bIsSold) return 1;
+     if (!aIsSold && bIsSold) return -1;
+
+     if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
+     if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
+     if (sortOption === "anio-nuevo") return Number(b.year) - Number(a.year);
+     if (sortOption === "anio-antiguo") return Number(a.year) - Number(b.year);
+     if (sortOption === "km-menor") return getKm(a) - getKm(b);
+
+     return 0;
+   });
   }, [filteredVehicles, sortOption]);
 
   const totalPages = Math.ceil(sortedVehicles.length / VEHICLES_PER_PAGE);
