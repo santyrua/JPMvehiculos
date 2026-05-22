@@ -390,12 +390,26 @@ export default function JPMVehiculosWeb() {
   const sortedVehicles = useMemo(() => {
     const getKm = (vehicle) => cleanNumber(vehicle.km);
 
+    const isEco = (vehicle) => {
+     const fuel = String(vehicle.fuel || "").toLowerCase();
+     return fuel === "híbrido" || fuel === "hibrido" || fuel === "eléctrico" || fuel === "electrico";
+   };
+
    return [...filteredVehicles].sort((a, b) => {
      const aIsSold = a.status === "Vendido";
      const bIsSold = b.status === "Vendido";
 
      if (aIsSold && !bIsSold) return 1;
      if (!aIsSold && bIsSold) return -1;
+
+     if (sortOption === "eco") {
+       const aIsEco = isEco(a);
+       const bIsEco = isEco(b);
+
+       if (aIsEco && !bIsEco) return -1;
+       if (!aIsEco && bIsEco) return 1;
+       return 0;
+     }
 
      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
      if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
@@ -405,7 +419,7 @@ export default function JPMVehiculosWeb() {
 
      return 0;
    });
-  }, [filteredVehicles, sortOption]);
+ }, [filteredVehicles, sortOption]);
 
   const totalPages = Math.ceil(sortedVehicles.length / VEHICLES_PER_PAGE);
   const paginationItems = useMemo(() => getPaginationItems(currentPage, totalPages), [currentPage, totalPages]);
@@ -751,6 +765,7 @@ export default function JPMVehiculosWeb() {
               </div>
               <select value={sortOption} onChange={(event) => setSortOption(event.target.value)} className="rounded-2xl bg-zinc-100 px-4 py-3 font-semibold outline-none">
                 <option value="recientes">Ordenar</option>
+                <option value="eco">Híbrido / Eléctrico</option>
                 <option value="precio-menor">Menor precio</option>
                 <option value="precio-mayor">Mayor precio</option>
                 <option value="anio-nuevo">Año más nuevo</option>
