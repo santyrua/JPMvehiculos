@@ -383,9 +383,7 @@ export default function JPMVehiculosWeb() {
       const matchesSearch = vehicle.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = vehicleType === "Todos" || vehicle.type === vehicleType;
       const matchesPrice = vehicle.priceNumber <= price;
-      const isAvailable = vehicle.status !== "Vendido";
-      return matchesSearch && matchesType && matchesPrice && isAvailable;
-    });
+      return matchesSearch && matchesType && matchesPrice;
   }, [vehicles, searchTerm, vehicleType, price]);
 
   const sortedVehicles = useMemo(() => {
