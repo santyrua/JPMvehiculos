@@ -308,7 +308,7 @@ function VehicleCard({ vehicle, onOpen }) {
         <div className="grid grid-cols-3 gap-3 rounded-2xl bg-zinc-950/70 p-4 text-base text-zinc-200">
           <div className="text-center font-medium">📅<br />{vehicle.year}</div>
           <div className="text-center font-medium">⏱<br />{vehicle.km}</div>
-          <div className="text-center font-medium">⛽<br />{vehicle.fuel}</div>
+          <div className="text-center font-medium">{vehicle.fuel === "Híbrido" ? "🌿" : vehicle.fuel === "Eléctrico"? "⚡": "⛽"}<br />{vehicle.fuel}</div>
         </div>
       </div>
     </article>
