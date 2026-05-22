@@ -384,6 +384,7 @@ export default function JPMVehiculosWeb() {
       const matchesType = vehicleType === "Todos" || vehicle.type === vehicleType;
       const matchesPrice = vehicle.priceNumber <= price;
       return matchesSearch && matchesType && matchesPrice;
+    });
   }, [vehicles, searchTerm, vehicleType, price]);
 
   const sortedVehicles = useMemo(() => {
