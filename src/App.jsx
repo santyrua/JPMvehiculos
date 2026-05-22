@@ -818,7 +818,7 @@ export default function JPMVehiculosWeb() {
         <section id="nosotros" className="bg-white py-20 text-zinc-950">
           <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
             <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Por qué elegirnos</p>
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Por qué elegirnos?</p>
               <h2 className="text-4xl font-black tracking-tight md:text-5xl">Una compraventa pensada para hacerlo fácil.</h2>
               <p className="mt-5 text-lg leading-8 text-zinc-600">JPM Vehículos nace en Barranquilla para conectar compradores y vendedores de carros, camionetas y motos con un proceso más claro, visual y directo.</p>
             </div>
