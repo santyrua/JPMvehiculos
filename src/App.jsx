@@ -524,7 +524,7 @@ export default function JPMVehiculosWeb() {
       doors: getDetailValue(vehicle, "Puertas") || "5",
       transmission: getDetailValue(vehicle, "Transmisión") || "Automática",
       motor: getDetailValue(vehicle, "Motor"),
-      bodyType: getDetailValue(vehicle, "Tipo de carrocería") || "Camioneta",
+      bodyType: getDetailValue(vehicle, "Tipo de carrocería") || "",
       reverseCamera: getDetailValue(vehicle, "Con cámara de reversa") || "Sí",
       plateLastDigit: getDetailValue(vehicle, "Último dígito de la placa"),
       description: vehicle.description || "",
