@@ -20,7 +20,7 @@ const emptyForm = {
   price: "",
   km: "",
   fuel: "Gasolina",
-  city: "Barranquilla",
+  city: "",
   color: "",
   doors: "5",
   transmission: "Automática",
