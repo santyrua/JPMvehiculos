@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
 import { Button } from "./ui.jsx";
+import { compressImage } from "./imageCompression.js";
 
 const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
 const AdminLogin = lazy(() => import("./AdminLogin.jsx"));
@@ -438,8 +439,19 @@ export default function JPMVehiculosWeb() {
   async function handleAdminPhotos(event) {
     setAdminError("");
     const files = Array.from(event.target.files || []);
+
+    let compressedFiles;
+    try {
+      compressedFiles = await Promise.all(files.map((file) => compressImage(file)));
+    } catch (error) {
+      console.error(error);
+      setAdminError("No se pudo procesar una de las fotos. Intenta con otra imagen.");
+      event.target.value = "";
+      return;
+    }
+
     const photos = await Promise.all(
-      files.map(
+      compressedFiles.map(
         (file) =>
           new Promise((resolve, reject) => {
             const reader = new FileReader();
