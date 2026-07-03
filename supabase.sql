@@ -26,61 +26,65 @@ create table if not exists vehicles (
 
 alter table vehicles enable row level security;
 
+-- Lectura pública del catálogo.
 drop policy if exists "Public can read vehicles" on vehicles;
 create policy "Public can read vehicles"
 on vehicles
 for select
 using (true);
 
+-- Escritura solo para usuarios autenticados (admin).
+-- Nota: se usa (select auth.role()) en lugar de auth.role() para que la condición
+-- se evalúe una sola vez por consulta y no fila por fila (recomendación del linter de Supabase).
 drop policy if exists "Authenticated can insert vehicles" on vehicles;
 create policy "Authenticated can insert vehicles"
 on vehicles
 for insert
 to authenticated
-with check (true);
+with check ((select auth.role()) = 'authenticated');
 
 drop policy if exists "Authenticated can update vehicles" on vehicles;
 create policy "Authenticated can update vehicles"
 on vehicles
 for update
 to authenticated
-using (true)
-with check (true);
+using ((select auth.role()) = 'authenticated')
+with check ((select auth.role()) = 'authenticated');
 
 drop policy if exists "Authenticated can delete vehicles" on vehicles;
 create policy "Authenticated can delete vehicles"
 on vehicles
 for delete
 to authenticated
-using (true);
+using ((select auth.role()) = 'authenticated');
 
 -- Crea un bucket público en Storage llamado: vehicle-photos
 -- Luego ejecuta estas políticas para Storage:
 
+-- IMPORTANTE: el bucket es público, así que las imágenes se sirven por su URL pública
+-- sin necesidad de una política SELECT. NO agregues una política de lectura amplia sobre
+-- storage.objects: permitiría LISTAR todos los archivos del bucket (aviso de seguridad de
+-- Supabase: public_bucket_allows_listing). Por eso aquí solo la eliminamos si existe.
 drop policy if exists "Public can read vehicle photos" on storage.objects;
-create policy "Public can read vehicle photos"
-on storage.objects
-for select
-using (bucket_id = 'vehicle-photos');
 
 drop policy if exists "Authenticated can upload vehicle photos" on storage.objects;
 create policy "Authenticated can upload vehicle photos"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'vehicle-photos');
+with check (bucket_id = 'vehicle-photos' and (select auth.role()) = 'authenticated');
 
 drop policy if exists "Authenticated can update vehicle photos" on storage.objects;
 create policy "Authenticated can update vehicle photos"
 on storage.objects
 for update
 to authenticated
-using (bucket_id = 'vehicle-photos')
-with check (bucket_id = 'vehicle-photos');
+using (bucket_id = 'vehicle-photos' and (select auth.role()) = 'authenticated')
+with check (bucket_id = 'vehicle-photos' and (select auth.role()) = 'authenticated');
 
 drop policy if exists "Authenticated can delete vehicle photos" on storage.objects;
 create policy "Authenticated can delete vehicle photos"
 on storage.objects
 for delete
 to authenticated
-using (bucket_id = 'vehicle-photos');
+using (bucket_id = 'vehicle-photos' and (select auth.role()) = 'authenticated');
