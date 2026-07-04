@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/vehiculo/(?<slugid>.*)",
+      "source": "/vehiculo/:slugid",
       "has": [
         {
           "type": "header",
@@ -9,7 +9,7 @@
           "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
         }
       ],
-      "destination": "/api/vehiculo?slugid=$slugid"
+      "destination": "/api/vehiculo?slugid=:slugid"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
