@@ -1,3 +1,5 @@
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+
 export default function AdminLogin({
   hasSupabase,
   adminEmail,
@@ -6,7 +8,13 @@ export default function AdminLogin({
   setAdminPassword,
   loginAdmin,
   onCancel,
+  hcaptchaSiteKey,
+  captchaToken,
+  setCaptchaToken,
+  captchaRef,
 }) {
+  const captchaEnabled = hasSupabase && !!hcaptchaSiteKey;
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 px-5 backdrop-blur-sm">
       <form
@@ -41,10 +49,23 @@ export default function AdminLogin({
           autoFocus={!hasSupabase}
         />
 
+        {captchaEnabled && (
+          <div className="mt-4 flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={hcaptchaSiteKey}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken("")}
+              onError={() => setCaptchaToken("")}
+            />
+          </div>
+        )}
+
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <button
             type="submit"
-            className="h-12 rounded-full bg-zinc-950 font-bold text-white"
+            disabled={captchaEnabled && !captchaToken}
+            className="h-12 rounded-full bg-zinc-950 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Entrar
           </button>

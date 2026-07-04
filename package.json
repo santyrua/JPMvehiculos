@@ -6,6 +6,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hcaptcha/react-hcaptcha": "^2.0.2",
     "@supabase/supabase-js": "latest",
     "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "latest",

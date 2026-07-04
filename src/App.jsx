@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
 import { Button } from "./ui.jsx";
@@ -11,6 +11,7 @@ const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.m
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
 const supabaseKey = viteEnv.VITE_SUPABASE_ANON_KEY || viteEnv.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const hcaptchaSiteKey = viteEnv.VITE_HCAPTCHA_SITE_KEY || "";
 
 const FALLBACK_ADMIN_PASSWORD = "JPMontoya1041692941@";
 const VEHICLES_PER_PAGE = 9;
@@ -317,6 +318,8 @@ export default function JPMVehiculosWeb() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef(null);
   const [adminVehicleSearch, setAdminVehicleSearch] = useState("");
   const [adminForm, setAdminForm] = useState({ ...emptyForm });
   const [adminPhotos, setAdminPhotos] = useState([]);
@@ -659,13 +662,27 @@ export default function JPMVehiculosWeb() {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({ email: adminEmail.trim(), password: adminPassword });
+      if (hcaptchaSiteKey && !captchaToken) {
+        alert("Completa el captcha para continuar.");
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: adminEmail.trim(),
+        password: adminPassword,
+        options: hcaptchaSiteKey ? { captchaToken } : undefined,
+      });
 
       if (error) {
         console.error(error);
+        // El token de hCaptcha es de un solo uso: reinícialo para permitir otro intento.
+        setCaptchaToken("");
+        captchaRef.current?.resetCaptcha();
         alert("Correo o contraseña incorrectos.");
         return;
       }
+
+      setCaptchaToken("");
     } else if (adminPassword !== FALLBACK_ADMIN_PASSWORD) {
       alert("Contraseña incorrecta");
       return;
@@ -895,7 +912,14 @@ export default function JPMVehiculosWeb() {
               adminPassword={adminPassword}
               setAdminPassword={setAdminPassword}
               loginAdmin={loginAdmin}
-              onCancel={() => setShowAdminLogin(false)}
+              onCancel={() => {
+                setShowAdminLogin(false);
+                setCaptchaToken("");
+              }}
+              hcaptchaSiteKey={hcaptchaSiteKey}
+              captchaToken={captchaToken}
+              setCaptchaToken={setCaptchaToken}
+              captchaRef={captchaRef}
             />
           </Suspense>
         )}
