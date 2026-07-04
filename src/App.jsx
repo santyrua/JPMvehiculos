@@ -306,6 +306,13 @@ export default function JPMVehiculosWeb() {
   }
   const [vehicles, setVehicles] = useState(starterVehicles);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showCatalog, setShowCatalog] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/vehiculo"));
+  const [pendingShortId, setPendingShortId] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const path = window.location.pathname;
+    if (path.startsWith("/vehiculo/")) return path.slice("/vehiculo/".length).replace(/\/+$/, "").split("-").pop() || null;
+    return null;
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [vehicleType, setVehicleType] = useState("Todos");
   const [price, setPrice] = useState(1000000000);
@@ -359,6 +366,27 @@ export default function JPMVehiculosWeb() {
       if (data.session) setIsAdminLoggedIn(true);
     });
   }, []);
+
+  useEffect(() => {
+    applyLocationToState();
+    window.addEventListener("popstate", applyLocationToState);
+    return () => window.removeEventListener("popstate", applyLocationToState);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingShortId) return;
+    const match = vehicles.find((vehicle) => vehicle.dbId && String(vehicle.dbId).slice(0, 8) === pendingShortId);
+    if (match) {
+      setSelectedVehicle(match);
+      setPendingShortId(null);
+    }
+  }, [pendingShortId, vehicles]);
+
+  useEffect(() => {
+    if (selectedVehicle) document.title = `${selectedVehicle.name} | JPM Vehículos`;
+    else if (showCatalog) document.title = "Vehículos disponibles | JPM Vehículos";
+    else document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
+  }, [selectedVehicle, showCatalog]);
 
   useEffect(() => {
     if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
@@ -699,6 +727,73 @@ export default function JPMVehiculosWeb() {
     setIsAdminLoggedIn(false);
   }
 
+  function pushPath(path) {
+    if (typeof window !== "undefined" && window.location.pathname !== path) {
+      window.history.pushState({}, "", path);
+    }
+  }
+
+  function slugify(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/[áàâä]/g, "a")
+      .replace(/[éèêë]/g, "e")
+      .replace(/[íìîï]/g, "i")
+      .replace(/[óòôö]/g, "o")
+      .replace(/[úùûü]/g, "u")
+      .replace(/ñ/g, "n")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function vehiclePath(vehicle) {
+    const shortId = vehicle?.dbId ? String(vehicle.dbId).slice(0, 8) : "";
+    const slug = slugify(vehicle?.name);
+    return "/vehiculo/" + (shortId ? `${slug}-${shortId}` : slug);
+  }
+
+  function applyLocationToState() {
+    const path = typeof window !== "undefined" ? window.location.pathname : "/";
+    if (path.startsWith("/vehiculo/")) {
+      const last = path.slice("/vehiculo/".length).replace(/\/+$/, "").split("-").pop();
+      setShowCatalog(true);
+      setPendingShortId(last || null);
+    } else if (path.startsWith("/vehiculos")) {
+      setShowCatalog(true);
+      setSelectedVehicle(null);
+      setPendingShortId(null);
+    } else {
+      setShowCatalog(false);
+      setSelectedVehicle(null);
+      setPendingShortId(null);
+    }
+  }
+
+  function openCatalog() {
+    setShowCatalog(true);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath("/vehiculos");
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeCatalog() {
+    setShowCatalog(false);
+    setSelectedVehicle(null);
+    pushPath("/");
+  }
+
+  function openVehicle(vehicle) {
+    setShowCatalog(true);
+    setSelectedVehicle(vehicle);
+    pushPath(vehiclePath(vehicle));
+  }
+
+  function closeVehicle() {
+    setSelectedVehicle(null);
+    pushPath("/vehiculos");
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
@@ -711,7 +806,7 @@ export default function JPMVehiculosWeb() {
           </a>
 
           <nav className="hidden items-center gap-8 text-sm text-zinc-300 md:flex">
-            <a className="transition hover:text-white" href="#vehiculos">Vehículos</a>
+            <button onClick={openCatalog} className="transition hover:text-white">Vehículos</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
             <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
           </nav>
@@ -723,7 +818,7 @@ export default function JPMVehiculosWeb() {
         {menuOpen && (
           <div className="border-t border-white/10 bg-zinc-950 px-5 pb-5 md:hidden">
             <div className="flex flex-col gap-4 pt-4 text-zinc-300">
-              <a onClick={() => setMenuOpen(false)} href="#vehiculos">Vehículos</a>
+              <button onClick={openCatalog} className="text-left">Vehículos</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
               <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
               <Button href={whatsappUrl} className="w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
@@ -739,7 +834,7 @@ export default function JPMVehiculosWeb() {
               <h1 className="max-w-2xl text-5xl font-black leading-tight tracking-tight md:text-7xl">JPM Vehículos: compra y venta de vehículos en Barranquilla.</h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-600">En JPM Vehículos, también conocido como jpmvehiculos.com, te ayudamos a comprar o vender tu carro, camioneta o moto de manera rápida, clara y segura, con atención personalizada en Barranquilla.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button href="#vehiculos" className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
+                <Button onClick={openCatalog} className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
                 <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
@@ -751,6 +846,20 @@ export default function JPMVehiculosWeb() {
             <div className="flex justify-center lg:justify-end lg:translate-x-10 xl:translate-x-16"><LogoCard /></div>
           </div>
         </section>
+
+        {showCatalog && (
+          <div className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950 text-white">
+            <div className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
+              <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+                <div>
+                  <p className="text-xl font-black tracking-tight">JPM</p>
+                  <p className="-mt-1 text-xs uppercase tracking-[0.32em] text-zinc-400">Vehículos</p>
+                </div>
+                <button onClick={closeCatalog} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+                  ← Volver al inicio
+                </button>
+              </div>
+            </div>
 
         <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
           <div className="rounded-[2rem] border border-white/10 bg-white p-4 text-zinc-950 shadow-xl">
@@ -795,7 +904,7 @@ export default function JPMVehiculosWeb() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {paginatedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={setSelectedVehicle} />)}
+            {paginatedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={openVehicle} />)}
           </div>
 
           {totalPages > 1 && (
@@ -845,6 +954,8 @@ export default function JPMVehiculosWeb() {
 
           {filteredVehicles.length === 0 && <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center text-zinc-300">No encontramos vehículos con esos filtros. Prueba con otra marca, tipo o sube el precio.</div>}
         </section>
+          </div>
+        )}
 
         <section id="nosotros" className="bg-white py-20 text-zinc-950">
           <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
@@ -928,7 +1039,7 @@ export default function JPMVehiculosWeb() {
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-5 py-8 backdrop-blur-sm">
             <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white text-zinc-950 shadow-2xl">
               <button
-                onClick={() => setSelectedVehicle(null)}
+                onClick={closeVehicle}
                 className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black text-2xl font-bold text-white"
               >
                 ×
@@ -940,7 +1051,7 @@ export default function JPMVehiculosWeb() {
                     <img
                       src={activePhoto || selectedVehicle.image}
                       alt={selectedVehicle.name}
-                      className="h-[360px] w-full rounded-[1.5rem] object-cover"
+                      className="h-[360px] w-full rounded-[1.5rem] object-contain bg-zinc-100"
                     />
 
                     <span
