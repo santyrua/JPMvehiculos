@@ -1109,6 +1109,15 @@ export default function JPMVehiculosWeb() {
                     {selectedVehicle.description}
                   </p>
 
+                  <a
+                    href={"https://wa.me/573175792923?text=" + encodeURIComponent(`Hola, estoy interesado en el ${selectedVehicle.name}`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-6 py-4 text-lg font-bold text-white transition hover:bg-zinc-800"
+                  >
+                    Preguntar por este carro
+                  </a>
+
                   <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-zinc-200">
                     {selectedVehicle.details?.map((item, index) => (
                       <div
