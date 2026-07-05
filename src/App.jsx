@@ -6,6 +6,7 @@ import { compressImage } from "./imageCompression.js";
 
 const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
 const AdminLogin = lazy(() => import("./AdminLogin.jsx"));
+const Tramites = lazy(() => import("./Tramites.jsx"));
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -307,6 +308,7 @@ export default function JPMVehiculosWeb() {
   const [vehicles, setVehicles] = useState(starterVehicles);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showCatalog, setShowCatalog] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/vehiculo"));
+  const [showTramites, setShowTramites] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/tramites"));
   const [pendingShortId, setPendingShortId] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -384,9 +386,10 @@ export default function JPMVehiculosWeb() {
 
   useEffect(() => {
     if (selectedVehicle) document.title = `${selectedVehicle.name} | JPM Vehículos`;
+    else if (showTramites) document.title = "Trámites vehiculares en Barranquilla | JPM Vehículos";
     else if (showCatalog) document.title = "Vehículos disponibles | JPM Vehículos";
     else document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
-  }, [selectedVehicle, showCatalog]);
+  }, [selectedVehicle, showCatalog, showTramites]);
 
   useEffect(() => {
     if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
@@ -757,13 +760,21 @@ export default function JPMVehiculosWeb() {
     if (path.startsWith("/vehiculo/")) {
       const last = path.slice("/vehiculo/".length).replace(/\/+$/, "").split("-").pop();
       setShowCatalog(true);
+      setShowTramites(false);
       setPendingShortId(last || null);
     } else if (path.startsWith("/vehiculos")) {
       setShowCatalog(true);
+      setShowTramites(false);
+      setSelectedVehicle(null);
+      setPendingShortId(null);
+    } else if (path.startsWith("/tramites")) {
+      setShowTramites(true);
+      setShowCatalog(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else {
       setShowCatalog(false);
+      setShowTramites(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     }
@@ -771,6 +782,7 @@ export default function JPMVehiculosWeb() {
 
   function openCatalog() {
     setShowCatalog(true);
+    setShowTramites(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/vehiculos");
@@ -794,6 +806,20 @@ export default function JPMVehiculosWeb() {
     pushPath("/vehiculos");
   }
 
+  function openTramites() {
+    setShowTramites(true);
+    setShowCatalog(false);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath("/tramites");
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeTramites() {
+    setShowTramites(false);
+    pushPath("/");
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
@@ -807,6 +833,7 @@ export default function JPMVehiculosWeb() {
 
           <nav className="hidden items-center gap-8 text-sm text-zinc-300 md:flex">
             <button onClick={openCatalog} className="transition hover:text-white">Vehículos</button>
+            <button onClick={openTramites} className="transition hover:text-white">Trámites</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
             <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
           </nav>
@@ -819,6 +846,7 @@ export default function JPMVehiculosWeb() {
           <div className="border-t border-white/10 bg-zinc-950 px-5 pb-5 md:hidden">
             <div className="flex flex-col gap-4 pt-4 text-zinc-300">
               <button onClick={openCatalog} className="text-left">Vehículos</button>
+              <button onClick={openTramites} className="text-left">Trámites</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
               <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
               <Button href={whatsappUrl} className="w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
@@ -988,6 +1016,12 @@ export default function JPMVehiculosWeb() {
             <Button href={whatsappUrl} className="mt-6 w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
           </div>
         </section>
+
+        {showTramites && (
+          <Suspense fallback={null}>
+            <Tramites onClose={closeTramites} />
+          </Suspense>
+        )}
 
         {isAdminLoggedIn && (
           <Suspense fallback={null}>
