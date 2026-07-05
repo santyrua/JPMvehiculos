@@ -991,7 +991,7 @@ export default function JPMVehiculosWeb() {
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Por qué elegirnos?</p>
               <h2 className="text-4xl font-black tracking-tight md:text-5xl">Una compraventa pensada para hacerlo fácil.</h2>
-              <p className="mt-5 text-lg leading-8 text-zinc-600">JPM Vehículos nace en Barranquilla para conectar compradores y vendedores de carros, camionetas y motos con un proceso más claro, visual y directo.</p>
+              <p className="mt-5 text-lg leading-8 text-zinc-600">Con sede en Barranquilla, JPM Vehículos es una empresa especializada en la compra y venta de vehiculos. Nos distinguimos por ofrecer una experiencia respaldada por la transparencia, la atención personalizada y un servicio profesional en cada negociación.</p>
             </div>
             <div className="grid gap-5 md:grid-cols-3">
               <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Compra segura</h3><p className="text-sm leading-6 text-zinc-600">Información clara, fotos visibles y asesoría.</p></div>
