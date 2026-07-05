@@ -863,8 +863,8 @@ export default function JPMVehiculosWeb() {
               <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-600">En JPM Vehículos te acompañamos en cada paso para comprar o vender tus vehículos de forma rápida y segura. Nuestro compromiso es brindarte una atención personalizada y un proceso confiable, para que vivas una experiencia ágil y sin complicaciones. Te esperamos para hacer de tu próxima negociación una experiencia de confianza. </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button onClick={openCatalog} className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
-                <Button onClick={openTramites} className="bg-zinc-950 text-white hover:bg-zinc-800">Ver trámites</Button>
-                <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
+                <Button onClick={openTramites} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver trámites</Button>
+                <Button href="#vender" className="bg-zinc-950 text-white hover:bg-zinc-800">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                 <div><p className="text-3xl font-black">+25 mil</p><p className="text-sm text-zinc-500">Seguidores</p></div>
