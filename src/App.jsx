@@ -1004,7 +1004,7 @@ export default function JPMVehiculosWeb() {
         <section id="vender" className="mx-auto max-w-4xl px-5 py-20 lg:px-8">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Contacta y vende</p>
           <h2 className="text-4xl font-black tracking-tight md:text-5xl">Habla con nosotros y vende tu vehículo.</h2>
-          <p className="mt-5 text-lg leading-8 text-zinc-300">En jpmvehiculos.com puedes enviarnos los datos de tu vehículo, pedir asesoría o consultar disponibilidad de carros, camionetas y motos en Barranquilla.</p>
+          <p className="mt-5 text-lg leading-8 text-zinc-300">Da el primer paso hoy. Cuéntanos qué vehículo deseas vender o buscar, y nosotros nos encargaremos de acompañarte durante todo el proceso.</p>
           <div id="contacto" className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-6">
             <h3 className="mb-4 text-2xl font-bold">Contacto directo</h3>
             <div className="space-y-4 text-zinc-300">
