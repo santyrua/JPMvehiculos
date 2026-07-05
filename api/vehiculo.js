@@ -1,7 +1,7 @@
-// Vista previa por carro para redes (WhatsApp, Facebook, etc.).
-// Solo los robots de redes llegan aquí (ver el "has: user-agent" en vercel.json);
+// Vista previa por carro para redes y buscadores (WhatsApp, Facebook, Google, etc.).
+// Solo los robots llegan aquí (ver el "has: user-agent" en vercel.json);
 // los usuarios normales reciben el sitio estático de siempre.
-// La función lee el vehículo de Supabase y devuelve el HTML con las etiquetas Open Graph.
+// Lee el vehículo de Supabase y devuelve HTML con Open Graph + datos estructurados (JSON-LD).
 
 export default async function handler(req, res) {
   const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://vnpzukvsnizsgxunwqbz.supabase.co";
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   try {
     if (shortId) {
       const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/vehicles?select=id,name,description,image,price_number,city,year&limit=500`,
+        `${SUPABASE_URL}/rest/v1/vehicles?select=id,name,description,image,price_number,city,year,brand,model,km,fuel,transmission,status&limit=500`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       if (response.ok) {
@@ -41,15 +41,56 @@ export default async function handler(req, res) {
   let title = "JPM Vehículos";
   let description = "Compra y venta de vehículos en Barranquilla.";
   let image = `${origin}/jpm-logo.jpeg.jpg`;
+  let bodyExtra = "";
+  let ld = null;
 
   if (vehicle) {
     const price = new Intl.NumberFormat("es-CO").format(Number(vehicle.price_number || 0));
     title = `${vehicle.name} · $${price}`;
     description = vehicle.description
-      ? String(vehicle.description).slice(0, 180)
+      ? String(vehicle.description).slice(0, 200)
       : `${vehicle.name} en venta en ${vehicle.city || "Barranquilla"}. JPM Vehículos.`;
     image = vehicle.image || image;
+
+    const specs = [
+      ["Marca", vehicle.brand],
+      ["Modelo", vehicle.model],
+      ["Año", vehicle.year],
+      ["Kilómetros", vehicle.km],
+      ["Combustible", vehicle.fuel],
+      ["Transmisión", vehicle.transmission],
+      ["Ciudad", vehicle.city],
+      ["Precio", `$${price}`],
+      ["Estado", vehicle.status],
+    ].filter(([, value]) => value);
+    bodyExtra = `<ul>${specs.map(([k, v]) => `<li>${esc(k)}: ${esc(v)}</li>`).join("")}</ul>`;
+
+    ld = {
+      "@context": "https://schema.org",
+      "@type": "Car",
+      name: vehicle.name,
+      image,
+      description,
+      url: pageUrl,
+      brand: vehicle.brand || undefined,
+      model: vehicle.model || undefined,
+      vehicleTransmission: vehicle.transmission || undefined,
+      fuelType: vehicle.fuel || undefined,
+      productionDate: vehicle.year || undefined,
+      mileageFromOdometer: vehicle.km
+        ? { "@type": "QuantitativeValue", value: String(vehicle.km).replace(/[^0-9]/g, ""), unitCode: "KMT" }
+        : undefined,
+      offers: {
+        "@type": "Offer",
+        price: String(vehicle.price_number || 0),
+        priceCurrency: "COP",
+        availability: vehicle.status === "Vendido" ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+        url: pageUrl,
+      },
+    };
   }
+
+  const ldScript = ld ? `<script type="application/ld+json">${JSON.stringify(ld)}</script>` : "";
 
   const html = `<!doctype html>
 <html lang="es">
@@ -69,10 +110,12 @@ export default async function handler(req, res) {
 <meta name="twitter:description" content="${esc(description)}" />
 <meta name="twitter:image" content="${esc(image)}" />
 <link rel="canonical" href="${esc(pageUrl)}" />
+${ldScript}
 </head>
 <body>
 <h1>${esc(title)}</h1>
 <p>${esc(description)}</p>
+${bodyExtra}
 <p><a href="${esc(pageUrl)}">Ver en JPM Vehículos</a></p>
 </body>
 </html>`;
