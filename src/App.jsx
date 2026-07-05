@@ -7,6 +7,7 @@ import { compressImage } from "./imageCompression.js";
 const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
 const AdminLogin = lazy(() => import("./AdminLogin.jsx"));
 const Tramites = lazy(() => import("./Tramites.jsx"));
+const Credito = lazy(() => import("./Credito.jsx"));
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -309,6 +310,7 @@ export default function JPMVehiculosWeb() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showCatalog, setShowCatalog] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/vehiculo"));
   const [showTramites, setShowTramites] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/tramites"));
+  const [showCredito, setShowCredito] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/credito"));
   const [pendingShortId, setPendingShortId] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -386,10 +388,11 @@ export default function JPMVehiculosWeb() {
 
   useEffect(() => {
     if (selectedVehicle) document.title = `${selectedVehicle.name} | JPM Vehículos`;
+    else if (showCredito) document.title = "Crédito vehicular en Barranquilla | JPM Vehículos";
     else if (showTramites) document.title = "Trámites vehiculares en Barranquilla | JPM Vehículos";
     else if (showCatalog) document.title = "Vehículos disponibles | JPM Vehículos";
     else document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
-  }, [selectedVehicle, showCatalog, showTramites]);
+  }, [selectedVehicle, showCatalog, showTramites, showCredito]);
 
   useEffect(() => {
     if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
@@ -761,20 +764,30 @@ export default function JPMVehiculosWeb() {
       const last = path.slice("/vehiculo/".length).replace(/\/+$/, "").split("-").pop();
       setShowCatalog(true);
       setShowTramites(false);
+      setShowCredito(false);
       setPendingShortId(last || null);
     } else if (path.startsWith("/vehiculos")) {
       setShowCatalog(true);
       setShowTramites(false);
+      setShowCredito(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else if (path.startsWith("/tramites")) {
       setShowTramites(true);
       setShowCatalog(false);
+      setShowCredito(false);
+      setSelectedVehicle(null);
+      setPendingShortId(null);
+    } else if (path.startsWith("/credito")) {
+      setShowCredito(true);
+      setShowCatalog(false);
+      setShowTramites(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else {
       setShowCatalog(false);
       setShowTramites(false);
+      setShowCredito(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     }
@@ -783,6 +796,7 @@ export default function JPMVehiculosWeb() {
   function openCatalog() {
     setShowCatalog(true);
     setShowTramites(false);
+    setShowCredito(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/vehiculos");
@@ -809,6 +823,7 @@ export default function JPMVehiculosWeb() {
   function openTramites() {
     setShowTramites(true);
     setShowCatalog(false);
+    setShowCredito(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/tramites");
@@ -817,6 +832,21 @@ export default function JPMVehiculosWeb() {
 
   function closeTramites() {
     setShowTramites(false);
+    pushPath("/");
+  }
+
+  function openCredito() {
+    setShowCredito(true);
+    setShowCatalog(false);
+    setShowTramites(false);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath("/credito");
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeCredito() {
+    setShowCredito(false);
     pushPath("/");
   }
 
@@ -834,6 +864,7 @@ export default function JPMVehiculosWeb() {
           <nav className="hidden items-center gap-8 text-sm text-zinc-300 md:flex">
             <button onClick={openCatalog} className="transition hover:text-white">Vehículos</button>
             <button onClick={openTramites} className="transition hover:text-white">Trámites</button>
+            <button onClick={openCredito} className="transition hover:text-white">Crédito</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
             <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
           </nav>
@@ -847,6 +878,7 @@ export default function JPMVehiculosWeb() {
             <div className="flex flex-col gap-4 pt-4 text-zinc-300">
               <button onClick={openCatalog} className="text-left">Vehículos</button>
               <button onClick={openTramites} className="text-left">Trámites</button>
+              <button onClick={openCredito} className="text-left">Crédito</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
               <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
               <Button href={whatsappUrl} className="w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
@@ -864,6 +896,7 @@ export default function JPMVehiculosWeb() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button onClick={openCatalog} className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
                 <Button onClick={openTramites} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver trámites</Button>
+                <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Crédito</Button>
                 <Button href="#vender" className="bg-zinc-950 text-white hover:bg-zinc-800">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
@@ -1021,6 +1054,12 @@ export default function JPMVehiculosWeb() {
         {showTramites && (
           <Suspense fallback={null}>
             <Tramites onClose={closeTramites} />
+          </Suspense>
+        )}
+
+        {showCredito && (
+          <Suspense fallback={null}>
+            <Credito onClose={closeCredito} />
           </Suspense>
         )}
 

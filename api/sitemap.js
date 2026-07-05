@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     { loc: `${origin}/`, priority: "1.0" },
     { loc: `${origin}/vehiculos`, priority: "0.9" },
     { loc: `${origin}/tramites`, priority: "0.8" },
+    { loc: `${origin}/credito`, priority: "0.8" },
     ...vehicles.map((vehicle) => ({
       loc: `${origin}/vehiculo/${slugify(vehicle.name)}-${String(vehicle.id).slice(0, 8)}`,
       priority: "0.8",
