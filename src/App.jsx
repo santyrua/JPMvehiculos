@@ -950,10 +950,10 @@ export default function JPMVehiculosWeb() {
           <div className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950 text-white">
             <div className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
               <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-                <div>
+                <button onClick={closeCatalog} className="text-left transition hover:opacity-80">
                   <p className="text-xl font-black tracking-tight">JPM</p>
                   <p className="-mt-1 text-xs uppercase tracking-[0.32em] text-zinc-400">Vehículos</p>
-                </div>
+                </button>
                 <button onClick={closeCatalog} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
                   ← Volver al inicio
                 </button>
