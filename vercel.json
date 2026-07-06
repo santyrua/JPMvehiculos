@@ -12,6 +12,39 @@
       ],
       "destination": "/api/vehiculo?slugid=:slugid"
     },
+    {
+      "source": "/tramites",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=tramites"
+    },
+    {
+      "source": "/credito",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=credito"
+    },
+    {
+      "source": "/seguros",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=seguros"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
