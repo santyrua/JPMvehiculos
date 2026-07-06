@@ -886,7 +886,7 @@ export default function JPMVehiculosWeb() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-black">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#inicio" className="flex items-center">
             <div>
