@@ -898,7 +898,7 @@ export default function JPMVehiculosWeb() {
           <nav className="hidden items-center gap-8 text-sm text-zinc-300 md:flex">
             <button onClick={openCatalog} className="transition hover:text-white">Vehículos</button>
             <button onClick={openTramites} className="transition hover:text-white">Trámites</button>
-            <button onClick={openCredito} className="transition hover:text-white">Crédito</button>
+            <button onClick={openCredito} className="transition hover:text-white">Créditos</button>
             <button onClick={openSeguros} className="transition hover:text-white">Seguros</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
             <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
@@ -913,7 +913,7 @@ export default function JPMVehiculosWeb() {
             <div className="flex flex-col gap-4 pt-4 text-zinc-300">
               <button onClick={openCatalog} className="text-left">Vehículos</button>
               <button onClick={openTramites} className="text-left">Trámites</button>
-              <button onClick={openCredito} className="text-left">Crédito</button>
+              <button onClick={openCredito} className="text-left">Créditos</button>
               <button onClick={openSeguros} className="text-left">Seguros</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
               <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
@@ -932,7 +932,7 @@ export default function JPMVehiculosWeb() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button onClick={openCatalog} className="bg-zinc-950 text-white hover:bg-zinc-800">Ver vehículos</Button>
                 <Button onClick={openTramites} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver trámites</Button>
-                <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Crédito</Button>
+                <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Créditos</Button>
                 <Button onClick={openSeguros} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver seguros</Button>
                 <Button href="#vender" className="bg-zinc-950 text-white hover:bg-zinc-800">Quiero vender mi carro</Button>
               </div>
