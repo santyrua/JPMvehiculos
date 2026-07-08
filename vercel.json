@@ -45,6 +45,17 @@
       ],
       "destination": "/api/pagina?slug=seguros"
     },
+    {
+      "source": "/comparendos",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=comparendos"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

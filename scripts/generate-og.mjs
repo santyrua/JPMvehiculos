@@ -31,6 +31,13 @@ const pages = [
     chips: ["Daños", "Hurto", "Resp. civil", "Asistencia 24h"],
     domain: "jpmvehiculos.com/seguros",
   },
+  {
+    slug: "comparendos",
+    eyebrow: "Comparendos",
+    titleLines: ["Curso de", "Seguridad Vial"],
+    chips: ["Hasta 50% dto.", "Comparendos", "Fotomultas", "Sin filas"],
+    domain: "jpmvehiculos.com/comparendos",
+  },
 ];
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

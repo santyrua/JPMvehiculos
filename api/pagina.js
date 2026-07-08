@@ -30,6 +30,14 @@ const PAGES = {
     image: "/og-seguros.jpg",
     name: "Seguro Todo Riesgo Vehicular",
   },
+  comparendos: {
+    path: "/comparendos",
+    title: "Curso de Seguridad Vial y descuento de comparendos | JPM Vehículos",
+    description:
+      "¿Tienes un comparendo? Hacemos el Curso de Seguridad Vial por ti para que obtengas hasta el 50% de descuento, sin filas ni desplazamientos. Rápido, fácil y seguro en Barranquilla.",
+    image: "/og-comparendos.jpg",
+    name: "Curso de Seguridad Vial",
+  },
 };
 
 export default async function handler(req, res) {

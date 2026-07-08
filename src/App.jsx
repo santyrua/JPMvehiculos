@@ -9,6 +9,7 @@ const AdminLogin = lazy(() => import("./AdminLogin.jsx"));
 const Tramites = lazy(() => import("./Tramites.jsx"));
 const Credito = lazy(() => import("./Credito.jsx"));
 const Seguros = lazy(() => import("./Seguros.jsx"));
+const Comparendos = lazy(() => import("./Comparendos.jsx"));
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -313,6 +314,7 @@ export default function JPMVehiculosWeb() {
   const [showTramites, setShowTramites] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/tramites"));
   const [showCredito, setShowCredito] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/credito"));
   const [showSeguros, setShowSeguros] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/seguros"));
+  const [showComparendos, setShowComparendos] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/comparendos"));
   const [pendingShortId, setPendingShortId] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -390,12 +392,13 @@ export default function JPMVehiculosWeb() {
 
   useEffect(() => {
     if (selectedVehicle) document.title = `${selectedVehicle.name} | JPM Vehículos`;
+    else if (showComparendos) document.title = "Curso de Seguridad Vial y descuento de comparendos en Barranquilla | JPM Vehículos";
     else if (showSeguros) document.title = "Seguro Todo Riesgo Vehicular en Barranquilla | JPM Vehículos";
     else if (showCredito) document.title = "Crédito vehicular en Barranquilla | JPM Vehículos";
     else if (showTramites) document.title = "Trámites vehiculares en Barranquilla | JPM Vehículos";
     else if (showCatalog) document.title = "Vehículos disponibles | JPM Vehículos";
     else document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
-  }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros]);
+  }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
 
   useEffect(() => {
     if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
@@ -769,12 +772,14 @@ export default function JPMVehiculosWeb() {
       setShowTramites(false);
       setShowCredito(false);
       setShowSeguros(false);
+      setShowComparendos(false);
       setPendingShortId(last || null);
     } else if (path.startsWith("/vehiculos")) {
       setShowCatalog(true);
       setShowTramites(false);
       setShowCredito(false);
       setShowSeguros(false);
+      setShowComparendos(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else if (path.startsWith("/tramites")) {
@@ -782,6 +787,7 @@ export default function JPMVehiculosWeb() {
       setShowCatalog(false);
       setShowCredito(false);
       setShowSeguros(false);
+      setShowComparendos(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else if (path.startsWith("/credito")) {
@@ -789,6 +795,7 @@ export default function JPMVehiculosWeb() {
       setShowCatalog(false);
       setShowTramites(false);
       setShowSeguros(false);
+      setShowComparendos(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else if (path.startsWith("/seguros")) {
@@ -796,6 +803,15 @@ export default function JPMVehiculosWeb() {
       setShowCatalog(false);
       setShowTramites(false);
       setShowCredito(false);
+      setShowComparendos(false);
+      setSelectedVehicle(null);
+      setPendingShortId(null);
+    } else if (path.startsWith("/comparendos")) {
+      setShowComparendos(true);
+      setShowCatalog(false);
+      setShowTramites(false);
+      setShowCredito(false);
+      setShowSeguros(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     } else {
@@ -803,6 +819,7 @@ export default function JPMVehiculosWeb() {
       setShowTramites(false);
       setShowCredito(false);
       setShowSeguros(false);
+      setShowComparendos(false);
       setSelectedVehicle(null);
       setPendingShortId(null);
     }
@@ -813,6 +830,7 @@ export default function JPMVehiculosWeb() {
     setShowTramites(false);
     setShowCredito(false);
     setShowSeguros(false);
+    setShowComparendos(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/vehiculos");
@@ -841,6 +859,7 @@ export default function JPMVehiculosWeb() {
     setShowCatalog(false);
     setShowCredito(false);
     setShowSeguros(false);
+    setShowComparendos(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/tramites");
@@ -857,6 +876,7 @@ export default function JPMVehiculosWeb() {
     setShowCatalog(false);
     setShowTramites(false);
     setShowSeguros(false);
+    setShowComparendos(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/credito");
@@ -873,6 +893,7 @@ export default function JPMVehiculosWeb() {
     setShowCatalog(false);
     setShowTramites(false);
     setShowCredito(false);
+    setShowComparendos(false);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/seguros");
@@ -881,6 +902,23 @@ export default function JPMVehiculosWeb() {
 
   function closeSeguros() {
     setShowSeguros(false);
+    pushPath("/");
+  }
+
+  function openComparendos() {
+    setShowComparendos(true);
+    setShowCatalog(false);
+    setShowTramites(false);
+    setShowCredito(false);
+    setShowSeguros(false);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath("/comparendos");
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeComparendos() {
+    setShowComparendos(false);
     pushPath("/");
   }
 
@@ -900,6 +938,7 @@ export default function JPMVehiculosWeb() {
             <button onClick={openTramites} className="transition hover:text-white">Trámites</button>
             <button onClick={openCredito} className="transition hover:text-white">Créditos</button>
             <button onClick={openSeguros} className="transition hover:text-white">Seguros</button>
+            <button onClick={openComparendos} className="transition hover:text-white">Comparendos</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
             <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
           </nav>
@@ -915,6 +954,7 @@ export default function JPMVehiculosWeb() {
               <button onClick={openTramites} className="text-left">Trámites</button>
               <button onClick={openCredito} className="text-left">Créditos</button>
               <button onClick={openSeguros} className="text-left">Seguros</button>
+              <button onClick={openComparendos} className="text-left">Comparendos</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
               <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
               <Button href={whatsappUrl} className="w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
@@ -934,7 +974,8 @@ export default function JPMVehiculosWeb() {
                 <Button onClick={openTramites} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver trámites</Button>
                 <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Créditos</Button>
                 <Button onClick={openSeguros} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver seguros</Button>
-                <Button href="#vender" className="bg-zinc-950 text-white hover:bg-zinc-800">Quiero vender mi carro</Button>
+                <Button onClick={openComparendos} className="bg-zinc-950 text-white hover:bg-zinc-800">Comparendos</Button>
+                <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                 <div><p className="text-3xl font-black">+25 mil</p><p className="text-sm text-zinc-500">Seguidores</p></div>
@@ -1103,6 +1144,12 @@ export default function JPMVehiculosWeb() {
         {showSeguros && (
           <Suspense fallback={null}>
             <Seguros onClose={closeSeguros} />
+          </Suspense>
+        )}
+
+        {showComparendos && (
+          <Suspense fallback={null}>
+            <Comparendos onClose={closeComparendos} />
           </Suspense>
         )}
 
