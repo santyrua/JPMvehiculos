@@ -975,7 +975,13 @@ export default function JPMVehiculosWeb() {
                 <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Créditos</Button>
                 <Button onClick={openSeguros} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver seguros</Button>
                 <Button onClick={openComparendos} className="bg-zinc-950 text-white hover:bg-zinc-800">Comparendos</Button>
-                <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                <a href="https://www.instagram.com/jpmvehiculos" target="_blank" rel="noreferrer" aria-label="Instagram" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">📸</span> Instagram</a>
+                <a href="https://www.facebook.com/profile.php?id=100086251221884" target="_blank" rel="noreferrer" aria-label="Facebook" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">📘</span> Facebook</a>
+                <a href="https://www.tiktok.com/@jpmvehiculos" target="_blank" rel="noreferrer" aria-label="TikTok" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">🎵</span> TikTok</a>
+                <a href="https://wa.me/573175792923" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">💬</span> WhatsApp</a>
+                <a href="mailto:BiecesJPM@gmail.com" aria-label="Correo" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">✉️</span> Correo</a>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                 <div><p className="text-3xl font-black">+25 mil</p><p className="text-sm text-zinc-500">Seguidores</p></div>
