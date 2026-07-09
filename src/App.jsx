@@ -297,6 +297,87 @@ function VehicleCard({ vehicle, onOpen }) {
   );
 }
 
+function OverlayNav({
+  current,
+  onHome,
+  onCatalog,
+  onTramites,
+  onCredito,
+  onSeguros,
+  onComparendos,
+  onNosotros,
+  onContacto,
+}) {
+  const [open, setOpen] = useState(false);
+
+  const links = [
+    { key: "vehiculos", label: "Vehículos", onClick: onCatalog },
+    { key: "tramites", label: "Trámites", onClick: onTramites },
+    { key: "credito", label: "Créditos", onClick: onCredito },
+    { key: "seguros", label: "Seguros", onClick: onSeguros },
+    { key: "comparendos", label: "Comparendos", onClick: onComparendos },
+    { key: "nosotros", label: "Nosotros", onClick: onNosotros },
+    { key: "vender", label: "Contáctanos y vende tu vehículo", onClick: onContacto },
+  ].filter((link) => link.key !== current);
+
+  return (
+    <div className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
+        <button onClick={onHome} className="text-left transition hover:opacity-80">
+          <p className="text-xl font-black tracking-tight">JPM</p>
+          <p className="-mt-1 text-xs uppercase tracking-[0.32em] text-zinc-400">Vehículos</p>
+        </button>
+
+        <nav className="hidden items-center gap-6 text-sm text-zinc-300 lg:flex">
+          {links.map((link) => (
+            <button
+              key={link.key}
+              onClick={link.onClick}
+              className="whitespace-nowrap transition hover:text-white"
+            >
+              {link.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onHome}
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            ← Volver al inicio
+          </button>
+          <button
+            onClick={() => setOpen(!open)}
+            className="rounded-xl border border-white/10 px-3 py-2 text-xl lg:hidden"
+          >
+            {open ? "×" : "☰"}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="border-t border-white/10 bg-zinc-950 px-5 pb-5 lg:hidden">
+          <div className="flex flex-col gap-4 pt-4 text-zinc-300">
+            {links.map((link) => (
+              <button
+                key={link.key}
+                onClick={() => {
+                  setOpen(false);
+                  link.onClick();
+                }}
+                className="text-left"
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JPMVehiculosWeb() {
   function isEcoVehicle(vehicle) {
     const fuel = String(vehicle.fuel || "").toLowerCase();
@@ -846,12 +927,6 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function closeCatalog() {
-    setShowCatalog(false);
-    setSelectedVehicle(null);
-    pushPath("/");
-  }
-
   function openVehicle(vehicle) {
     setShowCatalog(true);
     setSelectedVehicle(vehicle);
@@ -875,11 +950,6 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function closeTramites() {
-    setShowTramites(false);
-    pushPath("/");
-  }
-
   function openCredito() {
     setShowCredito(true);
     setShowCatalog(false);
@@ -890,11 +960,6 @@ export default function JPMVehiculosWeb() {
     setMenuOpen(false);
     pushPath("/credito");
     window.scrollTo({ top: 0 });
-  }
-
-  function closeCredito() {
-    setShowCredito(false);
-    pushPath("/");
   }
 
   function openSeguros() {
@@ -909,11 +974,6 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function closeSeguros() {
-    setShowSeguros(false);
-    pushPath("/");
-  }
-
   function openComparendos() {
     setShowComparendos(true);
     setShowCatalog(false);
@@ -926,9 +986,46 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function closeComparendos() {
+  function goHome() {
+    setShowCatalog(false);
+    setShowTramites(false);
+    setShowCredito(false);
+    setShowSeguros(false);
     setShowComparendos(false);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
     pushPath("/");
+    window.scrollTo({ top: 0 });
+  }
+
+  function goToSection(id) {
+    setShowCatalog(false);
+    setShowTramites(false);
+    setShowCredito(false);
+    setShowSeguros(false);
+    setShowComparendos(false);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath("/");
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    }, 60);
+  }
+
+  function overlayNav(current) {
+    return (
+      <OverlayNav
+        current={current}
+        onHome={goHome}
+        onCatalog={openCatalog}
+        onTramites={openTramites}
+        onCredito={openCredito}
+        onSeguros={openSeguros}
+        onComparendos={openComparendos}
+        onNosotros={() => goToSection("nosotros")}
+        onContacto={() => goToSection("vender")}
+      />
+    );
   }
 
   return (
@@ -998,17 +1095,7 @@ export default function JPMVehiculosWeb() {
 
         {showCatalog && (
           <div className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950 text-white">
-            <div className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
-              <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-                <button onClick={closeCatalog} className="text-left transition hover:opacity-80">
-                  <p className="text-xl font-black tracking-tight">JPM</p>
-                  <p className="-mt-1 text-xs uppercase tracking-[0.32em] text-zinc-400">Vehículos</p>
-                </button>
-                <button onClick={closeCatalog} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
-                  ← Volver al inicio
-                </button>
-              </div>
-            </div>
+            {overlayNav("vehiculos")}
 
         <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
           <div className="rounded-[2rem] border border-white/10 bg-white p-4 text-zinc-950 shadow-xl">
@@ -1143,25 +1230,25 @@ export default function JPMVehiculosWeb() {
 
         {showTramites && (
           <Suspense fallback={null}>
-            <Tramites onClose={closeTramites} />
+            <Tramites nav={overlayNav("tramites")} />
           </Suspense>
         )}
 
         {showCredito && (
           <Suspense fallback={null}>
-            <Credito onClose={closeCredito} />
+            <Credito nav={overlayNav("credito")} />
           </Suspense>
         )}
 
         {showSeguros && (
           <Suspense fallback={null}>
-            <Seguros onClose={closeSeguros} />
+            <Seguros nav={overlayNav("seguros")} />
           </Suspense>
         )}
 
         {showComparendos && (
           <Suspense fallback={null}>
-            <Comparendos onClose={closeComparendos} />
+            <Comparendos nav={overlayNav("comparendos")} />
           </Suspense>
         )}
 
