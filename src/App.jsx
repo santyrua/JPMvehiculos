@@ -537,6 +537,15 @@ export default function JPMVehiculosWeb() {
     return vehicle.details?.find((item) => item.label === label)?.value || "";
   }
 
+  function whatsappMessageForVehicle(vehicle) {
+    const color = getDetailValue(vehicle, "Color");
+    return (
+      `Hola, estoy interesado en el ${vehicle.name}` +
+      (vehicle.year ? ` ${vehicle.year}` : "") +
+      (color ? `, color ${color}` : "")
+    );
+  }
+
   function editVehicle(vehicle, index) {
     setEditingIndex(index);
     setAdminError("");
@@ -1278,7 +1287,7 @@ export default function JPMVehiculosWeb() {
 
                   {selectedVehicle.status !== "Vendido" && (
                     <a
-                      href={"https://wa.me/573175792923?text=" + encodeURIComponent(`Hola, estoy interesado en el ${selectedVehicle.name}`)}
+                      href={"https://wa.me/573175792923?text=" + encodeURIComponent(whatsappMessageForVehicle(selectedVehicle))}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-6 py-4 text-lg font-bold text-white transition hover:bg-zinc-800"
