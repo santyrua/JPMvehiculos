@@ -975,13 +975,7 @@ export default function JPMVehiculosWeb() {
                 <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Créditos</Button>
                 <Button onClick={openSeguros} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver seguros</Button>
                 <Button onClick={openComparendos} className="bg-zinc-950 text-white hover:bg-zinc-800">Comparendos</Button>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                <a href="https://www.instagram.com/jpmvehiculos" target="_blank" rel="noreferrer" aria-label="Instagram" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">📸</span> Instagram</a>
-                <a href="https://www.facebook.com/profile.php?id=100086251221884" target="_blank" rel="noreferrer" aria-label="Facebook" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">📘</span> Facebook</a>
-                <a href="https://www.tiktok.com/@jpmvehiculos" target="_blank" rel="noreferrer" aria-label="TikTok" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">🎵</span> TikTok</a>
-                <a href="https://wa.me/573175792923" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">💬</span> WhatsApp</a>
-                <a href="mailto:BiecesJPM@gmail.com" aria-label="Correo" className="inline-flex items-center gap-2 rounded-full border border-black/20 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"><span aria-hidden="true">✉️</span> Correo</a>
+                <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                 <div><p className="text-3xl font-black">+25 mil</p><p className="text-sm text-zinc-500">Seguidores</p></div>
@@ -1124,12 +1118,15 @@ export default function JPMVehiculosWeb() {
           <p className="mt-5 text-lg leading-8 text-zinc-300">Da el primer paso hoy. Cuéntanos qué vehículo deseas vender o buscar, y nosotros nos encargaremos de acompañarte durante todo el proceso.</p>
           <div id="contacto" className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-6">
             <h3 className="mb-4 text-2xl font-bold">Contacto directo</h3>
-            <div className="space-y-4 text-zinc-300">
+            <div className="space-y-3 text-zinc-300">
               <div>☎ +57 317 579 2923</div>
-              <div>📸 IG @jpmvehiculos</div>
-              <div>📘 Facebook @JPM vehiculos</div>
-              <div>✉️ BiecesJPM@gmail.com</div>
               <div>📍 Barranquilla, Colombia</div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <a href="https://www.instagram.com/jpmvehiculos" target="_blank" rel="noreferrer" aria-label="Instagram" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"><span aria-hidden="true">📸</span> Instagram</a>
+              <a href="https://www.facebook.com/profile.php?id=100086251221884" target="_blank" rel="noreferrer" aria-label="Facebook" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"><span aria-hidden="true">📘</span> Facebook</a>
+              <a href="https://www.tiktok.com/@jpmvehiculos" target="_blank" rel="noreferrer" aria-label="TikTok" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"><span aria-hidden="true">🎵</span> TikTok</a>
+              <a href="mailto:BiecesJPM@gmail.com" aria-label="Correo" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"><span aria-hidden="true">✉️</span> Correo</a>
             </div>
             <Button href={whatsappUrl} className="mt-6 w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
           </div>
