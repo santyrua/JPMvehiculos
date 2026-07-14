@@ -1028,6 +1028,16 @@ export default function JPMVehiculosWeb() {
     );
   }
 
+  function siteFooter() {
+    return (
+      <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
+        <button onClick={openAdminLogin} className="cursor-default select-none">
+          © 2026 JPM Vehículos. Compra y venta de vehículos.
+        </button>
+      </footer>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-black">
@@ -1190,6 +1200,8 @@ export default function JPMVehiculosWeb() {
 
           {filteredVehicles.length === 0 && <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center text-zinc-300">No encontramos vehículos con esos filtros. Prueba con otra marca, tipo o sube el precio.</div>}
         </section>
+
+        {siteFooter()}
           </div>
         )}
 
@@ -1404,11 +1416,7 @@ export default function JPMVehiculosWeb() {
         )}
       </main>
 
-      <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-zinc-500">
-        <button onClick={openAdminLogin} className="cursor-default select-none">
-          © 2026 JPM Vehículos. Compra y venta de vehículos.
-        </button>
-      </footer>
+      {siteFooter()}
 
       <Analytics />
     </div>
