@@ -820,7 +820,14 @@ export default function JPMVehiculosWeb() {
 
     setIsAdminLoggedIn(true);
     setShowAdminLogin(false);
+    setShowCatalog(false);
+    setShowTramites(false);
+    setShowCredito(false);
+    setShowSeguros(false);
+    setShowComparendos(false);
+    setSelectedVehicle(null);
     setAdminPassword("");
+    pushPath("/");
     setTimeout(() => document.getElementById("admin")?.scrollIntoView({ behavior: "smooth" }), 100);
   }
 
