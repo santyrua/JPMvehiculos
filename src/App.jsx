@@ -486,6 +486,14 @@ export default function JPMVehiculosWeb() {
   }, [selectedVehicle]);
 
   useEffect(() => {
+    const overlayOpen = showCatalog || showTramites || showCredito || showSeguros || showComparendos;
+    document.body.style.overflow = overlayOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, vehicleType, price, sortOption]);
 
