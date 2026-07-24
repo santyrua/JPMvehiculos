@@ -31,7 +31,7 @@ export default function Comparendos({ nav, whatsappNumber = "573175792923" }) {
     encodeURIComponent("Hola, quiero información sobre el Curso de Seguridad Vial para el descuento de mi comparendo.");
 
   return (
-    <div className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950 text-white">
+    <div className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-zinc-950 text-white">
       {nav}
 
       <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8">

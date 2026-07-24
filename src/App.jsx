@@ -488,8 +488,10 @@ export default function JPMVehiculosWeb() {
   useEffect(() => {
     const overlayOpen = showCatalog || showTramites || showCredito || showSeguros || showComparendos;
     document.body.style.overflow = overlayOpen ? "hidden" : "";
+    document.body.style.overscrollBehavior = overlayOpen ? "none" : "";
     return () => {
       document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
     };
   }, [showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
 
@@ -1119,7 +1121,7 @@ export default function JPMVehiculosWeb() {
         </section>
 
         {showCatalog && (
-          <div className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950 text-white">
+          <div className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-zinc-950 text-white">
             {overlayNav("vehiculos")}
 
         <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
@@ -1327,7 +1329,7 @@ export default function JPMVehiculosWeb() {
 
         {selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 px-5 py-8 backdrop-blur-sm">
-            <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white text-zinc-950 shadow-2xl">
+            <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto overscroll-contain rounded-[2rem] bg-white text-zinc-950 shadow-2xl">
               <button
                 onClick={closeVehicle}
                 className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black text-2xl font-bold text-white"
