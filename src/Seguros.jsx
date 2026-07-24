@@ -27,7 +27,7 @@ const aseguradoras = [
   { name: "MAPFRE", logo: "/logos/mapfre.png" },
   { name: "La Equidad Seguros", logo: "/logos/equidad.png" },
   { name: "HDI Seguros", logo: "/logos/hdi.png" },
-  { name: "SBS Seguros", logo: null },
+  { name: "SBS Seguros", logo: "/logos/sbs.png" },
   { name: "Seguros Mundial", logo: "/logos/mundial.svg" },
   { name: "La Previsora", logo: "/logos/previsora.png" },
   { name: "Seguros del Estado", logo: "/logos/estado.png" },

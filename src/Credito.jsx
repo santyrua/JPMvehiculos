@@ -39,16 +39,16 @@ const entidades = [
   { name: "BBVA Colombia", logo: "/logos-credito/bbva.svg" },
   { name: "Banco Finandina", logo: "/logos-credito/finandina.png" },
   { name: "Sufi", logo: "/logos-credito/sufi.svg" },
-  { name: "Finanzauto", logo: null },
-  { name: "Mobilize Financial Services", logo: null },
+  { name: "Finanzauto", logo: "/logos-credito/finanzauto.png" },
+  { name: "Mobilize Financial Services", logo: "/logos-credito/mobilize.png" },
   { name: "Toyota Financial Services", logo: "/logos-credito/toyotafs.svg" },
   { name: "Banco Santander Colombia", logo: "/logos-credito/santander.svg" },
-  { name: "DeltaCredit", logo: null },
-  { name: "Uni2", logo: null },
-  { name: "Sumas", logo: null },
-  { name: "Apoyo Financiero", logo: null },
+  { name: "DeltaCredit", logo: "/logos-credito/deltacredit.png" },
+  { name: "Uni2", logo: "/logos-credito/uni2.png" },
+  { name: "Sumas", logo: "/logos-credito/sumas.png" },
+  { name: "Apoyo Financiero", logo: "/logos-credito/apoyofinanciero.png" },
   { name: "Finesa", logo: "/logos-credito/finesa.svg" },
-  { name: "Vehigrupo", logo: null },
+  { name: "Vehigrupo", logo: "/logos-credito/vehigrupo.png" },
 ];
 
 const beneficios = [
