@@ -20,18 +20,18 @@ const coberturas = [
 ];
 
 const aseguradoras = [
-  "SURA",
-  "AXA Colpatria",
-  "Allianz",
-  "Seguros Bolívar",
-  "MAPFRE",
-  "La Equidad Seguros",
-  "HDI Seguros",
-  "SBS Seguros",
-  "Seguros Mundial",
-  "La Previsora",
-  "Seguros del Estado",
-  "Aseguradora Solidaria",
+  { name: "SURA", logo: "/logos/sura.svg" },
+  { name: "AXA Colpatria", logo: "/logos/axa.svg" },
+  { name: "Allianz", logo: "/logos/allianz.svg" },
+  { name: "Seguros Bolívar", logo: "/logos/bolivar.png" },
+  { name: "MAPFRE", logo: "/logos/mapfre.png" },
+  { name: "La Equidad Seguros", logo: "/logos/equidad.png" },
+  { name: "HDI Seguros", logo: "/logos/hdi.png" },
+  { name: "SBS Seguros", logo: null },
+  { name: "Seguros Mundial", logo: "/logos/mundial.svg" },
+  { name: "La Previsora", logo: "/logos/previsora.png" },
+  { name: "Seguros del Estado", logo: "/logos/estado.png" },
+  { name: "Aseguradora Solidaria", logo: "/logos/solidaria.svg" },
 ];
 
 export default function Seguros({ nav, whatsappNumber = "573175792923" }) {
@@ -43,30 +43,60 @@ export default function Seguros({ nav, whatsappNumber = "573175792923" }) {
       {nav}
 
       <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Seguros</p>
-        <h2 className="max-w-3xl text-4xl font-black tracking-tight md:text-5xl">
-          Seguro Todo Riesgo Vehicular
-        </h2>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
-          Protege tu vehículo con un Seguro Todo Riesgo diseñado para brindarte tranquilidad en cada recorrido.
-          Trabajamos con las principales aseguradoras del país para ofrecerte diferentes alternativas de cobertura,
-          beneficios y precios, permitiéndote comparar y elegir la opción que mejor se adapte a tus necesidades y
-          presupuesto.
-        </p>
-        <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-400">
-          Nuestro proceso es rápido, fácil y con acompañamiento personalizado. Solo debes suministrar la información
-          básica del vehículo y del propietario para recibir una cotización con varias opciones de aseguradoras. Una vez
-          elijas la alternativa que mejor se ajuste a tus necesidades, se realiza la emisión de la póliza y tu vehículo
-          quedará protegido con el respaldo de una compañía aseguradora reconocida.
-        </p>
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-8 py-4 font-bold text-zinc-950 transition hover:bg-zinc-200"
-        >
-          Cotizar mi seguro
-        </a>
+        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div>
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Seguros</p>
+            <h2 className="text-4xl font-black tracking-tight md:text-5xl">
+              Seguro Todo Riesgo Vehicular
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-zinc-300">
+              Protege tu vehículo con un Seguro Todo Riesgo diseñado para brindarte tranquilidad en cada recorrido.
+              Trabajamos con las principales aseguradoras del país para ofrecerte diferentes alternativas de cobertura,
+              beneficios y precios, permitiéndote comparar y elegir la opción que mejor se adapte a tus necesidades y
+              presupuesto.
+            </p>
+            <p className="mt-3 text-base leading-7 text-zinc-400">
+              Nuestro proceso es rápido, fácil y con acompañamiento personalizado. Solo debes suministrar la información
+              básica del vehículo y del propietario para recibir una cotización con varias opciones de aseguradoras. Una vez
+              elijas la alternativa que mejor se ajuste a tus necesidades, se realiza la emisión de la póliza y tu vehículo
+              quedará protegido con el respaldo de una compañía aseguradora reconocida.
+            </p>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-8 py-4 font-bold text-zinc-950 transition hover:bg-zinc-200"
+            >
+              Cotizar mi seguro
+            </a>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6">
+            <p className="mb-4 text-xs font-black uppercase tracking-[0.24em] text-amber-300">Trabajamos con</p>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-3">
+              {aseguradoras.map((aseguradora) => (
+                <div
+                  key={aseguradora.name}
+                  title={aseguradora.name}
+                  className="flex h-16 items-center justify-center rounded-xl bg-white px-3"
+                >
+                  {aseguradora.logo ? (
+                    <img
+                      src={aseguradora.logo}
+                      alt={aseguradora.name}
+                      loading="lazy"
+                      className="max-h-9 w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-center text-[11px] font-bold leading-tight text-zinc-700">
+                      {aseguradora.name}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-5 pb-4 lg:px-8">
@@ -113,10 +143,10 @@ export default function Seguros({ nav, whatsappNumber = "573175792923" }) {
         <div className="mt-6 flex flex-wrap gap-3">
           {aseguradoras.map((aseguradora) => (
             <span
-              key={aseguradora}
+              key={aseguradora.name}
               className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-zinc-200"
             >
-              {aseguradora}
+              {aseguradora.name}
             </span>
           ))}
         </div>
