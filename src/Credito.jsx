@@ -34,21 +34,21 @@ const requisitos = [
 ];
 
 const entidades = [
-  "Banco de Bogotá",
-  "Davivienda",
-  "BBVA Colombia",
-  "Banco Finandina",
-  "Sufi",
-  "Finanzauto",
-  "Mobilize Financial Services",
-  "Toyota Financial Services",
-  "Banco Santander Colombia",
-  "Delta Credit",
-  "Uni2",
-  "Summa",
-  "Apoyos Financieros",
-  "Finesa",
-  "Vehigroup",
+  { name: "Banco de Bogotá", logo: "/logos-credito/bogota.svg" },
+  { name: "Davivienda", logo: "/logos-credito/davivienda.png" },
+  { name: "BBVA Colombia", logo: "/logos-credito/bbva.svg" },
+  { name: "Banco Finandina", logo: "/logos-credito/finandina.png" },
+  { name: "Sufi", logo: "/logos-credito/sufi.svg" },
+  { name: "Finanzauto", logo: null },
+  { name: "Mobilize Financial Services", logo: null },
+  { name: "Toyota Financial Services", logo: "/logos-credito/toyotafs.svg" },
+  { name: "Banco Santander Colombia", logo: "/logos-credito/santander.svg" },
+  { name: "Delta Credit", logo: null },
+  { name: "Uni2", logo: null },
+  { name: "Summa", logo: null },
+  { name: "Apoyos Financieros", logo: null },
+  { name: "Finesa", logo: "/logos-credito/finesa.svg" },
+  { name: "Vehigroup", logo: null },
 ];
 
 const beneficios = [
@@ -68,26 +68,56 @@ export default function Credito({ nav, whatsappNumber = "573175792923" }) {
       {nav}
 
       <section className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Crédito vehicular</p>
-        <h2 className="max-w-3xl text-4xl font-black tracking-tight md:text-5xl">
-          ¡Haz realidad el sueño de tener tu vehículo!
-        </h2>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
-          Te acompañamos durante todo el proceso para que obtengas tu crédito vehicular de forma rápida, segura y con
-          las mejores alternativas de financiación del mercado.
-        </p>
-        <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-400">
-          Nuestro equipo de asesores analizará tu perfil y gestionará tu solicitud con diferentes entidades financieras
-          para encontrar la opción que mejor se adapte a tus necesidades y capacidad de pago.
-        </p>
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-8 py-4 font-bold text-zinc-950 transition hover:bg-zinc-200"
-        >
-          Solicitar mi crédito
-        </a>
+        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+          <div>
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Crédito vehicular</p>
+            <h2 className="text-4xl font-black tracking-tight md:text-5xl">
+              ¡Haz realidad el sueño de tener tu vehículo!
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-zinc-300">
+              Te acompañamos durante todo el proceso para que obtengas tu crédito vehicular de forma rápida, segura y con
+              las mejores alternativas de financiación del mercado.
+            </p>
+            <p className="mt-3 text-base leading-7 text-zinc-400">
+              Nuestro equipo de asesores analizará tu perfil y gestionará tu solicitud con diferentes entidades financieras
+              para encontrar la opción que mejor se adapte a tus necesidades y capacidad de pago.
+            </p>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-8 py-4 font-bold text-zinc-950 transition hover:bg-zinc-200"
+            >
+              Solicitar mi crédito
+            </a>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-6">
+            <p className="mb-4 text-xs font-black uppercase tracking-[0.24em] text-amber-300">Trabajamos con</p>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-3">
+              {entidades.map((entidad) => (
+                <div
+                  key={entidad.name}
+                  title={entidad.name}
+                  className="flex h-16 items-center justify-center rounded-xl bg-white px-3"
+                >
+                  {entidad.logo ? (
+                    <img
+                      src={entidad.logo}
+                      alt={entidad.name}
+                      loading="lazy"
+                      className="max-h-9 w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-center text-[11px] font-bold leading-tight text-zinc-700">
+                      {entidad.name}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-5 pb-4 lg:px-8">
@@ -139,10 +169,10 @@ export default function Credito({ nav, whatsappNumber = "573175792923" }) {
         <div className="mt-6 flex flex-wrap gap-3">
           {entidades.map((entidad) => (
             <span
-              key={entidad}
+              key={entidad.name}
               className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-zinc-200"
             >
-              {entidad}
+              {entidad.name}
             </span>
           ))}
         </div>
