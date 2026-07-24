@@ -43,12 +43,12 @@ const entidades = [
   { name: "Mobilize Financial Services", logo: null },
   { name: "Toyota Financial Services", logo: "/logos-credito/toyotafs.svg" },
   { name: "Banco Santander Colombia", logo: "/logos-credito/santander.svg" },
-  { name: "Delta Credit", logo: null },
+  { name: "DeltaCredit", logo: null },
   { name: "Uni2", logo: null },
-  { name: "Summa", logo: null },
-  { name: "Apoyos Financieros", logo: null },
+  { name: "Sumas", logo: null },
+  { name: "Apoyo Financiero", logo: null },
   { name: "Finesa", logo: "/logos-credito/finesa.svg" },
-  { name: "Vehigroup", logo: null },
+  { name: "Vehigrupo", logo: null },
 ];
 
 const beneficios = [
