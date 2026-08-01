@@ -444,6 +444,35 @@ function VehicleCard({ vehicle, onOpen }) {
   );
 }
 
+// Cambiar de foto deslizando el dedo. Solo cuenta el gesto claramente
+// horizontal: si no, se comería el desplazamiento vertical de la pantalla.
+const swipeMinimum = 50;
+
+function useSwipe({ onLeft, onRight }) {
+  const start = useRef(null);
+
+  return {
+    onPointerDown(event) {
+      start.current = { x: event.clientX, y: event.clientY };
+    },
+    onPointerUp(event) {
+      const from = start.current;
+      start.current = null;
+      if (!from) return;
+
+      const dx = event.clientX - from.x;
+      const dy = event.clientY - from.y;
+      if (Math.abs(dx) < swipeMinimum || Math.abs(dx) <= Math.abs(dy)) return;
+
+      if (dx < 0) onLeft();
+      else onRight();
+    },
+    onPointerCancel() {
+      start.current = null;
+    },
+  };
+}
+
 // Visor a pantalla completa con zoom. Se abre desde el detalle del vehículo y
 // conserva las flechas de paso, que quedan fijas y no se mueven con el zoom.
 function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
@@ -452,6 +481,7 @@ function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
   const pointers = useRef(new Map());
   const pinchStart = useRef(null);
   const dragStart = useRef(null);
+  const swipeStart = useRef(null);
 
   // Cada foto empieza sin zoom, para no heredar el encuadre de la anterior.
   useEffect(() => {
@@ -487,8 +517,12 @@ function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
       const [a, b] = [...pointers.current.values()];
       pinchStart.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), zoom };
       dragStart.current = null;
+      swipeStart.current = null;
     } else if (zoom > 1) {
       dragStart.current = { x: event.clientX - pan.x, y: event.clientY - pan.y };
+    } else {
+      // Sin zoom no hay nada que arrastrar, así que el gesto cambia de foto.
+      swipeStart.current = { x: event.clientX, y: event.clientY };
     }
   }
 
@@ -509,6 +543,17 @@ function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
     pointers.current.delete(event.pointerId);
     if (pointers.current.size < 2) pinchStart.current = null;
     if (pointers.current.size === 0) dragStart.current = null;
+
+    const from = swipeStart.current;
+    swipeStart.current = null;
+    if (!from || zoom > 1 || pointers.current.size > 0) return;
+
+    const dx = event.clientX - from.x;
+    const dy = event.clientY - from.y;
+    if (Math.abs(dx) < swipeMinimum || Math.abs(dx) <= Math.abs(dy)) return;
+
+    if (dx < 0) onNext();
+    else onPrev();
   }
 
   const boton = "flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl font-bold text-white transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-30";
@@ -777,6 +822,11 @@ export default function JPMVehiculosWeb() {
     if (next < 0 || next >= detailPhotos.length) return;
     setActivePhoto(detailPhotos[next]);
   }
+
+  const detailSwipe = useSwipe({
+    onLeft: () => stepDetailPhoto(1),
+    onRight: () => stepDetailPhoto(-1),
+  });
 
   useEffect(() => {
     // Con el visor abierto manda él; si no, cada flecha avanzaría dos fotos.
@@ -1740,11 +1790,14 @@ export default function JPMVehiculosWeb() {
 
               <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
                 <div className="bg-zinc-100 p-5">
-                  <div className="relative">
+                  {/* touchAction pan-y: el deslizamiento horizontal cambia de
+                      foto, pero el vertical sigue desplazando la pantalla. */}
+                  <div className="relative" style={{ touchAction: "pan-y" }} {...detailSwipe}>
                     <img
                       src={activePhoto || selectedVehicle.image}
                       alt={selectedVehicle.name}
-                      className="h-[360px] w-full rounded-[1.5rem] object-contain bg-zinc-100"
+                      draggable={false}
+                      className="h-[360px] w-full select-none rounded-[1.5rem] object-contain bg-zinc-100"
                     />
 
                     <span
