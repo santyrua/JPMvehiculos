@@ -318,7 +318,7 @@ function OverlayNav({
     { key: "comparendos", label: "Comparendos", onClick: onComparendos },
     { key: "nosotros", label: "Nosotros", onClick: onNosotros },
     { key: "vender", label: "Contáctanos y vende tu vehículo", onClick: onContacto },
-  ].filter((link) => link.key !== current);
+  ];
 
   return (
     <div className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl">
@@ -333,7 +333,13 @@ function OverlayNav({
             <button
               key={link.key}
               onClick={link.onClick}
-              className="whitespace-nowrap transition hover:text-white"
+              aria-current={link.key === current ? "page" : undefined}
+              className={
+                "whitespace-nowrap border-b-2 pb-1 transition " +
+                (link.key === current
+                  ? "border-amber-300 font-semibold text-amber-300"
+                  : "border-transparent hover:text-white")
+              }
             >
               {link.label}
             </button>
@@ -366,7 +372,13 @@ function OverlayNav({
                   setOpen(false);
                   link.onClick();
                 }}
-                className="text-left"
+                aria-current={link.key === current ? "page" : undefined}
+                className={
+                  "text-left " +
+                  (link.key === current
+                    ? "font-semibold text-amber-300 underline decoration-amber-300 decoration-2 underline-offset-4"
+                    : "")
+                }
               >
                 {link.label}
               </button>
@@ -416,6 +428,7 @@ export default function JPMVehiculosWeb() {
   const [adminPassword, setAdminPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const captchaRef = useRef(null);
+  const catalogTopRef = useRef(null);
   const [adminVehicleSearch, setAdminVehicleSearch] = useState("");
   const [adminForm, setAdminForm] = useState({ ...emptyForm });
   const [adminPhotos, setAdminPhotos] = useState([]);
@@ -1071,6 +1084,70 @@ export default function JPMVehiculosWeb() {
     );
   }
 
+  // Al cambiar de página sube la vista al primer carro, para no tener que
+  // desplazarse a mano. El catálogo es una capa con scroll propio, así que
+  // scrollIntoView (que sí respeta el contenedor) es lo que funciona aquí.
+  function goToPage(page) {
+    setCurrentPage(page);
+    catalogTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // La misma barra se muestra arriba y abajo de la grilla; "position" solo
+  // separa las keys y los márgenes.
+  function paginationBar(position) {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div
+        className={
+          "rounded-[2rem] border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-5 " +
+          (position === "arriba" ? "mb-8" : "mt-12")
+        }
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Catálogo paginado</p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Mostrando <span className="font-bold text-white">{firstVisibleVehicle}-{lastVisibleVehicle}</span> de <span className="font-bold text-white">{sortedVehicles.length}</span> vehículos
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
+              « Primero
+            </button>
+            <button onClick={() => goToPage(Math.max(currentPage - 1, 1))} disabled={currentPage === 1} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
+              ← Anterior
+            </button>
+
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1">
+              {paginationItems.map((item) =>
+                typeof item === "string" ? (
+                  <span key={`${position}-${item}`} className="flex h-10 min-w-10 items-center justify-center px-2 text-sm font-black text-zinc-500">…</span>
+                ) : (
+                  <button key={`${position}-${item}`} onClick={() => goToPage(item)} className={"h-10 min-w-10 rounded-full px-3 text-sm font-black transition " + (currentPage === item ? "bg-amber-300 text-zinc-950 shadow-lg shadow-amber-300/20" : "text-zinc-300 hover:bg-white/10 hover:text-white")}>
+                    {item}
+                  </button>
+                )
+              )}
+            </div>
+
+            <button onClick={() => goToPage(Math.min(currentPage + 1, totalPages))} disabled={currentPage === totalPages} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
+              Siguiente →
+            </button>
+            <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
+              Último »
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-amber-300 transition-all duration-300" style={{ width: `${(currentPage / totalPages) * 100}%` }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-black">
@@ -1182,54 +1259,15 @@ export default function JPMVehiculosWeb() {
             <p className="mt-3 text-zinc-400">{filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} encontrado{filteredVehicles.length === 1 ? "" : "s"}</p>
           </div>
 
+          <div ref={catalogTopRef} className="scroll-mt-24">
+            {paginationBar("arriba")}
+          </div>
+
           <div className="grid gap-6 md:grid-cols-3">
             {paginatedVehicles.map((vehicle, index) => <VehicleCard key={(vehicle.dbId || vehicle.name) + index} vehicle={vehicle} onOpen={openVehicle} />)}
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-12 rounded-[2rem] border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Catálogo paginado</p>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Mostrando <span className="font-bold text-white">{firstVisibleVehicle}-{lastVisibleVehicle}</span> de <span className="font-bold text-white">{sortedVehicles.length}</span> vehículos
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
-                    « Primero
-                  </button>
-                  <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
-                    ← Anterior
-                  </button>
-
-                  <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1">
-                    {paginationItems.map((item) =>
-                      typeof item === "string" ? (
-                        <span key={item} className="flex h-10 min-w-10 items-center justify-center px-2 text-sm font-black text-zinc-500">…</span>
-                      ) : (
-                        <button key={item} onClick={() => setCurrentPage(item)} className={"h-10 min-w-10 rounded-full px-3 text-sm font-black transition " + (currentPage === item ? "bg-amber-300 text-zinc-950 shadow-lg shadow-amber-300/20" : "text-zinc-300 hover:bg-white/10 hover:text-white")}>
-                          {item}
-                        </button>
-                      )
-                    )}
-                  </div>
-
-                  <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="inline-flex h-11 items-center rounded-full border border-white/10 bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35">
-                    Siguiente →
-                  </button>
-                  <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="hidden h-11 rounded-full border border-white/10 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35 sm:inline-flex sm:items-center">
-                    Último »
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-amber-300 transition-all duration-300" style={{ width: `${(currentPage / totalPages) * 100}%` }} />
-              </div>
-            </div>
-          )}
+          {paginationBar("abajo")}
 
           {filteredVehicles.length === 0 && <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-center text-zinc-300">No encontramos vehículos con esos filtros. Prueba con otra marca, tipo o sube el precio.</div>}
         </section>
