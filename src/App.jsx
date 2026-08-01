@@ -129,14 +129,42 @@ const accentHints = {
   mecanico: "Mecánico", mecanica: "Mecánica", automatico: "Automático", automatica: "Automática",
   sedan: "Sedán", diesel: "Diésel", hibrido: "Híbrido", electrico: "Eléctrico",
   metalico: "Metálico", metalica: "Metálica", basico: "Básico", clasico: "Clásico", hidraulico: "Hidráulico",
+  bogota: "Bogotá", medellin: "Medellín", cucuta: "Cúcuta", monteria: "Montería", ibague: "Ibagué",
+  cafe: "Café", marron: "Marrón", turquesa: "Turquesa", champan: "Champán", burdeos: "Burdeos",
 };
 
-const reviewedFields = [["name", "Nombre"], ["version", "Versión"], ["color", "Color"], ["motor", "Motor"]];
+const reviewedFields = [
+  ["name", "Nombre"], ["brand", "Marca"], ["model", "Modelo"], ["version", "Versión"],
+  ["city", "Ciudad"], ["color", "Color"], ["motor", "Motor"],
+];
 
-function reviewVehicleForm(form, knownBrands, modelsByBrand) {
+// Distancia de edición, para sugerir "Fortuner" cuando se escribió "fortunere".
+// Corta en cuanto pasa del límite: no interesa saber si están muy lejos.
+function editDistance(a, b, limit) {
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+
+  let previous = Array.from({ length: b.length + 1 }, (unused, i) => i);
+
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + cost);
+    }
+    if (Math.min(...current) > limit) return limit + 1;
+    previous = current;
+  }
+
+  return previous[b.length];
+}
+
+function reviewVehicleForm(form, catalog) {
+  const { knownBrands, modelsByBrand, knownCities, knownWords } = catalog;
   const warnings = [];
   const brand = String(form.brand || "").trim();
   const model = String(form.model || "").trim();
+  const city = String(form.city || "").trim();
+  const name = String(form.name || "").trim();
   const sameText = (a, b) => a.toLowerCase() === b.toLowerCase();
 
   if (brand && knownBrands.length && !knownBrands.some((known) => sameText(known, brand))) {
@@ -154,6 +182,42 @@ function reviewVehicleForm(form, knownBrands, modelsByBrand) {
       titulo: `"${model}" no coincide con ningún modelo ${known} de tu catálogo`,
       detalle: "Revisa que esté bien escrito. Modelos " + known + " que ya tienes: " + models.join(", ") + ".",
     });
+  }
+
+  if (city && knownCities.length && !knownCities.some((item) => sameText(item, city))) {
+    warnings.push({
+      titulo: `La ciudad "${city}" no aparece en tu catálogo`,
+      detalle: "Ciudades que ya usas: " + knownCities.slice(0, 8).join(", ") + ".",
+    });
+  }
+
+  // El nombre suele repetir la marca y el modelo. Si no los contiene como
+  // palabras completas, alguno de los dos está mal escrito.
+  const nameWords = name.split(/[\s/,-]+/).filter(Boolean);
+  const hasWord = (word) => nameWords.some((item) => sameText(item, word));
+
+  for (const [value, label] of [[brand, "la marca"], [model, "el modelo"]]) {
+    const missing = value.split(/\s+/).filter(Boolean).filter((word) => !hasWord(word));
+    if (name && value && missing.length > 0) {
+      warnings.push({
+        titulo: `El nombre no coincide con ${label}: "${value}"`,
+        detalle: `En el nombre no aparece "${missing.join(" ")}". Revisa que esté escrito igual en los dos campos.`,
+      });
+    }
+  }
+
+  // "¿Quisiste decir...?": palabras del nombre a una letra de una marca o
+  // modelo que ya usas. Caza "fortunere" aunque el campo Modelo esté vacío.
+  for (const word of nameWords) {
+    if (word.length < 5 || knownWords.some((item) => sameText(item, word))) continue;
+
+    const suggestion = knownWords.find((item) => editDistance(word.toLowerCase(), item.toLowerCase(), 1) === 1);
+    if (suggestion) {
+      warnings.push({
+        titulo: `Nombre: ¿quisiste decir "${suggestion}" en vez de "${word}"?`,
+        detalle: `"${suggestion}" es lo que usas en el resto del catálogo.`,
+      });
+    }
   }
 
   for (const [field, label] of reviewedFields) {
@@ -682,12 +746,25 @@ export default function JPMVehiculosWeb() {
   // de posibles erratas ("Capture" cuando el resto dice "Captur").
   const catalogSpelling = useMemo(() => {
     const brands = new Map();
+    const cities = new Map();
+    const words = new Map();
+
+    const remember = (map, value) => {
+      const text = String(value || "").trim();
+      if (text) map.set(text.toLowerCase(), text);
+    };
 
     for (const vehicle of vehicles) {
       const brand = getDetailValue(vehicle, "Marca").trim();
       const model = getDetailValue(vehicle, "Modelo").trim();
-      if (!brand) continue;
+      remember(cities, vehicle.city);
 
+      // Palabras sueltas de marcas y modelos, para el "¿quisiste decir...?".
+      for (const word of `${brand} ${model}`.split(/\s+/)) {
+        if (word.length >= 4) remember(words, word);
+      }
+
+      if (!brand) continue;
       const key = brand.toLowerCase();
       if (!brands.has(key)) brands.set(key, { brand, models: new Set() });
       if (model) brands.get(key).models.add(model);
@@ -697,7 +774,12 @@ export default function JPMVehiculosWeb() {
     const modelsByBrand = {};
     for (const { brand, models } of brands.values()) modelsByBrand[brand] = [...models].sort();
 
-    return { knownBrands, modelsByBrand };
+    return {
+      knownBrands,
+      modelsByBrand,
+      knownCities: [...cities.values()].sort(),
+      knownWords: [...words.values()],
+    };
   }, [vehicles]);
 
   function updateAdminField(field, value) {
@@ -843,7 +925,7 @@ export default function JPMVehiculosWeb() {
     // Las posibles erratas solo se avisan: el dato puede venir así de la
     // tarjeta de propiedad, y en ese caso se guarda tal cual con "Guardar así".
     if (!options.skipReview) {
-      const warnings = reviewVehicleForm(form, catalogSpelling.knownBrands, catalogSpelling.modelsByBrand);
+      const warnings = reviewVehicleForm(form, catalogSpelling);
       if (warnings.length > 0) {
         setAdminWarnings(warnings);
         setAdminError("");
