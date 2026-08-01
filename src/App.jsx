@@ -1422,9 +1422,9 @@ export default function JPMVehiculosWeb() {
               <p className="mt-5 text-lg leading-8 text-zinc-600">Con sede en Barranquilla, JPM Vehículos es una empresa especializada en la compra y venta de vehiculos. Nos distinguimos por ofrecer una experiencia respaldada por la transparencia, la atención personalizada y un servicio profesional en cada negociación.</p>
             </div>
             <div className="grid gap-5 md:grid-cols-3">
-              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Compra segura</h3><p className="text-sm leading-6 text-zinc-600">Información clara, fotos visibles y asesoría.</p></div>
-              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Buenas ofertas</h3><p className="text-sm leading-6 text-zinc-600">Opciones seleccionadas para tu presupuesto.</p></div>
-              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Atención rápida</h3><p className="text-sm leading-6 text-zinc-600">Contacto directo por WhatsApp.</p></div>
+              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Compra segura</h3><p className="text-sm leading-6 text-zinc-600">Te brindamos información clara, fotos reales y asesoramiento personalizado en cada paso de tu compra.</p></div>
+              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Buenas ofertas</h3><p className="text-sm leading-6 text-zinc-600">Encuentra opciones seleccionadas según tu presupuesto y necesidades, con precios competitivos y asesoría personalizada.</p></div>
+              <div className="rounded-[2rem] bg-zinc-100 p-6"><h3 className="text-xl font-bold">Atención rápida</h3><p className="text-sm leading-6 text-zinc-600">Resolvemos tus dudas al instante mediante WhatsApp, con respuesta rápida y asesoría personalizada.</p></div>
             </div>
           </div>
         </section>
