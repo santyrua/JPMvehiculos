@@ -42,6 +42,13 @@ const emptyForm = {
   status: "Disponible",
 };
 
+// Carrocerías válidas según el tipo de vehículo. Los tipos que no estén aquí
+// (Moto) dejan el campo como texto libre.
+const bodyTypesByVehicleType = {
+  Carro: ["Sedán", "Hatchback", "Coupé", "Convertible", "Wagon"],
+  Camioneta: ["Wagon", "Platón", "Panel", "Furgón"],
+};
+
 const requiredFields = [
   ["name", "Nombre completo del vehículo"],
   ["type", "Tipo de vehículo"],
@@ -596,7 +603,19 @@ export default function JPMVehiculosWeb() {
 
   function updateAdminField(field, value) {
     setAdminError("");
-    setAdminForm((current) => ({ ...current, [field]: value }));
+    setAdminForm((current) => {
+      const next = { ...current, [field]: value };
+
+      // Al cambiar el tipo de vehículo, la carrocería que tenía puede dejar de
+      // aplicar (un Sedán no existe en Camioneta), así que se limpia para que
+      // se elija de nuevo. Los tipos sin lista (Moto) conservan lo escrito.
+      if (field === "type") {
+        const options = bodyTypesByVehicleType[value];
+        if (options && next.bodyType && !options.includes(next.bodyType)) next.bodyType = "";
+      }
+
+      return next;
+    });
   }
 
   async function handleAdminPhotos(event) {
@@ -1349,6 +1368,7 @@ export default function JPMVehiculosWeb() {
               removeAdminPhoto={removeAdminPhoto}
               saveVehicle={saveVehicle}
               isSaving={isSaving}
+              bodyTypeOptions={bodyTypesByVehicleType[adminForm.type] || null}
               adminVehicleSearch={adminVehicleSearch}
               setAdminVehicleSearch={setAdminVehicleSearch}
               adminFilteredVehicles={adminFilteredVehicles}

@@ -12,6 +12,7 @@ export default function AdminPanel({
   removeAdminPhoto,
   saveVehicle,
   isSaving,
+  bodyTypeOptions,
   adminVehicleSearch,
   setAdminVehicleSearch,
   adminFilteredVehicles,
@@ -146,11 +147,31 @@ export default function AdminPanel({
                 placeholder="Puertas"
               />
 
-              <FormInput
-                value={adminForm.bodyType}
-                onChange={(value) => updateAdminField("bodyType", value)}
-                placeholder="Tipo de carrocería"
-              />
+              {bodyTypeOptions ? (
+                <FormSelect
+                  value={adminForm.bodyType}
+                  onChange={(value) => updateAdminField("bodyType", value)}
+                >
+                  <option value="">Tipo de carrocería</option>
+
+                  {/* Los vehículos cargados antes traen valores que no están en
+                      la lista ("Sedan" sin tilde, "STATION WAGON", "Carga"...).
+                      Se muestran como opción para no borrarlos al editar. */}
+                  {adminForm.bodyType && !bodyTypeOptions.includes(adminForm.bodyType) && (
+                    <option value={adminForm.bodyType}>{adminForm.bodyType} (actual)</option>
+                  )}
+
+                  {bodyTypeOptions.map((bodyType) => (
+                    <option key={bodyType} value={bodyType}>{bodyType}</option>
+                  ))}
+                </FormSelect>
+              ) : (
+                <FormInput
+                  value={adminForm.bodyType}
+                  onChange={(value) => updateAdminField("bodyType", value)}
+                  placeholder="Tipo de carrocería"
+                />
+              )}
 
               <FormInput
                 value={adminForm.plateLastDigit}
