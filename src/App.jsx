@@ -103,6 +103,82 @@ function validateVehicleForm(form, photos) {
   return { ok: true, message: "" };
 }
 
+// Campos de una sola línea: se les quitan los espacios sobrantes al guardar.
+// Sin esto se cuelan valores como "Barranquilla " o "Hatchback ", que crean
+// duplicados invisibles (el catálogo llegó a tener 45 de 89 vehículos así).
+const singleLineFields = ["name", "brand", "model", "version", "year", "city", "color", "motor", "bodyType", "plateLastDigit"];
+
+function cleanFormText(form) {
+  const cleaned = { ...form };
+
+  for (const field of singleLineFields) {
+    if (typeof cleaned[field] === "string") cleaned[field] = cleaned[field].replace(/\s+/g, " ").trim();
+  }
+
+  // La descripción conserva sus saltos de línea; solo se limpian los espacios.
+  if (typeof cleaned.description === "string") {
+    cleaned.description = cleaned.description.replace(/[ \t]+/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").trim();
+  }
+
+  return cleaned;
+}
+
+// Palabras que suelen escribirse sin tilde. Solo se avisa: el dato puede venir
+// tal cual de la tarjeta de propiedad y entonces está bien como está.
+const accentHints = {
+  mecanico: "Mecánico", mecanica: "Mecánica", automatico: "Automático", automatica: "Automática",
+  sedan: "Sedán", diesel: "Diésel", hibrido: "Híbrido", electrico: "Eléctrico",
+  metalico: "Metálico", metalica: "Metálica", basico: "Básico", clasico: "Clásico", hidraulico: "Hidráulico",
+};
+
+const reviewedFields = [["name", "Nombre"], ["version", "Versión"], ["color", "Color"], ["motor", "Motor"]];
+
+function reviewVehicleForm(form, knownBrands, modelsByBrand) {
+  const warnings = [];
+  const brand = String(form.brand || "").trim();
+  const model = String(form.model || "").trim();
+  const sameText = (a, b) => a.toLowerCase() === b.toLowerCase();
+
+  if (brand && knownBrands.length && !knownBrands.some((known) => sameText(known, brand))) {
+    warnings.push({
+      titulo: `La marca "${brand}" no aparece en tu catálogo`,
+      detalle: "Si es una marca nueva, todo bien. Marcas que ya usas: " + knownBrands.slice(0, 12).join(", ") + ".",
+    });
+  }
+
+  const known = knownBrands.find((item) => sameText(item, brand));
+  const models = known ? modelsByBrand[known] || [] : [];
+
+  if (model && models.length && !models.some((item) => sameText(item, model))) {
+    warnings.push({
+      titulo: `"${model}" no coincide con ningún modelo ${known} de tu catálogo`,
+      detalle: "Revisa que esté bien escrito. Modelos " + known + " que ya tienes: " + models.join(", ") + ".",
+    });
+  }
+
+  for (const [field, label] of reviewedFields) {
+    const text = String(form[field] || "");
+
+    for (const word of text.split(/[\s/,-]+/).filter(Boolean)) {
+      const hint = accentHints[word.toLowerCase()];
+      if (hint && word !== hint) {
+        warnings.push({ titulo: `${label}: "${word}" quizás lleva tilde`, detalle: `Se escribiría "${hint}".` });
+      }
+
+      // Palabras largas en mayúsculas. Las siglas cortas (LTZ, SRV, MHEV) se
+      // dejan pasar porque son nombres de versión legítimos.
+      if (word.length >= 6 && /^[A-ZÁÉÍÓÚÑ]+$/.test(word)) {
+        warnings.push({
+          titulo: `${label}: "${word}" está todo en mayúsculas`,
+          detalle: `Quedaría más parejo como "${word.charAt(0) + word.slice(1).toLowerCase()}".`,
+        });
+      }
+    }
+  }
+
+  return warnings;
+}
+
 function getPaginationItems(currentPage, totalPages) {
   if (totalPages <= 1) return [];
 
@@ -440,6 +516,7 @@ export default function JPMVehiculosWeb() {
   const [adminForm, setAdminForm] = useState({ ...emptyForm });
   const [adminPhotos, setAdminPhotos] = useState([]);
   const [adminError, setAdminError] = useState("");
+  const [adminWarnings, setAdminWarnings] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -601,8 +678,31 @@ export default function JPMVehiculosWeb() {
     });
   }, [vehicles, adminVehicleSearch]);
 
+  // Marcas y modelos ya usados en el catálogo. Sirven de referencia para avisar
+  // de posibles erratas ("Capture" cuando el resto dice "Captur").
+  const catalogSpelling = useMemo(() => {
+    const brands = new Map();
+
+    for (const vehicle of vehicles) {
+      const brand = getDetailValue(vehicle, "Marca").trim();
+      const model = getDetailValue(vehicle, "Modelo").trim();
+      if (!brand) continue;
+
+      const key = brand.toLowerCase();
+      if (!brands.has(key)) brands.set(key, { brand, models: new Set() });
+      if (model) brands.get(key).models.add(model);
+    }
+
+    const knownBrands = [...brands.values()].map((item) => item.brand).sort();
+    const modelsByBrand = {};
+    for (const { brand, models } of brands.values()) modelsByBrand[brand] = [...models].sort();
+
+    return { knownBrands, modelsByBrand };
+  }, [vehicles]);
+
   function updateAdminField(field, value) {
     setAdminError("");
+    setAdminWarnings([]);
     setAdminForm((current) => {
       const next = { ...current, [field]: value };
 
@@ -724,18 +824,36 @@ export default function JPMVehiculosWeb() {
     setAdminPhotos((current) => current.filter((_, index) => index !== indexToRemove));
   }
 
-  async function saveVehicle(event) {
-    event.preventDefault();
-    const validation = validateVehicleForm(adminForm, adminPhotos);
-    const priceNumber = cleanPrice(adminForm.price);
+  async function saveVehicle(event, options = {}) {
+    if (event) event.preventDefault();
+
+    // Los espacios sobrantes se quitan siempre; eso nunca es un dato válido.
+    const form = cleanFormText(adminForm);
+    setAdminForm(form);
+
+    const validation = validateVehicleForm(form, adminPhotos);
+    const priceNumber = cleanPrice(form.price);
 
     if (!validation.ok) {
       setAdminError(validation.message);
+      setAdminWarnings([]);
       return;
+    }
+
+    // Las posibles erratas solo se avisan: el dato puede venir así de la
+    // tarjeta de propiedad, y en ese caso se guarda tal cual con "Guardar así".
+    if (!options.skipReview) {
+      const warnings = reviewVehicleForm(form, catalogSpelling.knownBrands, catalogSpelling.modelsByBrand);
+      if (warnings.length > 0) {
+        setAdminWarnings(warnings);
+        setAdminError("");
+        return;
+      }
     }
 
     setIsSaving(true);
     setAdminError("");
+    setAdminWarnings([]);
 
     let photoUrls = [];
     try {
@@ -747,44 +865,44 @@ export default function JPMVehiculosWeb() {
       return;
     }
 
-    const formattedKm = `${formatKm(adminForm.km)} km`;
+    const formattedKm = `${formatKm(form.km)} km`;
     const newVehicle = {
-      name: adminForm.name,
-      type: adminForm.type,
+      name: form.name,
+      type: form.type,
       priceNumber,
-      year: adminForm.year,
+      year: form.year,
       km: formattedKm,
-      fuel: adminForm.fuel,
+      fuel: form.fuel,
       price: money(priceNumber),
-      city: adminForm.city,
+      city: form.city,
       image: photoUrls[0],
       photos: photoUrls,
-      description: adminForm.description,
-      status: adminForm.status,
-      details: detailsFromForm(adminForm),
+      description: form.description,
+      status: form.status,
+      details: detailsFromForm(form),
     };
 
     if (supabase && isAdminLoggedIn) {
       const payload = {
-        name: adminForm.name,
-        type: adminForm.type,
-        brand: adminForm.brand,
-        model: adminForm.model,
-        version: adminForm.version,
-        year: adminForm.year,
+        name: form.name,
+        type: form.type,
+        brand: form.brand,
+        model: form.model,
+        version: form.version,
+        year: form.year,
         price_number: priceNumber,
         km: formattedKm,
-        fuel: adminForm.fuel,
-        city: adminForm.city,
-        color: adminForm.color,
-        doors: adminForm.doors,
-        transmission: adminForm.transmission,
-        motor: adminForm.motor,
-        body_type: adminForm.bodyType,
-        reverse_camera: adminForm.reverseCamera,
-        plate_last_digit: adminForm.plateLastDigit,
-        description: adminForm.description,
-        status: adminForm.status,
+        fuel: form.fuel,
+        city: form.city,
+        color: form.color,
+        doors: form.doors,
+        transmission: form.transmission,
+        motor: form.motor,
+        body_type: form.bodyType,
+        reverse_camera: form.reverseCamera,
+        plate_last_digit: form.plateLastDigit,
+        description: form.description,
+        status: form.status,
         image: photoUrls[0],
         photos: photoUrls,
       };
@@ -811,6 +929,7 @@ export default function JPMVehiculosWeb() {
     setAdminForm({ ...emptyForm });
     setAdminPhotos([]);
     setAdminError("");
+    setAdminWarnings([]);
     setIsSaving(false);
     document.getElementById("vehiculos")?.scrollIntoView({ behavior: "smooth" });
   }
@@ -1369,6 +1488,9 @@ export default function JPMVehiculosWeb() {
               saveVehicle={saveVehicle}
               isSaving={isSaving}
               bodyTypeOptions={bodyTypesByVehicleType[adminForm.type] || null}
+              adminWarnings={adminWarnings}
+              dismissWarnings={() => setAdminWarnings([])}
+              saveAnyway={() => saveVehicle(null, { skipReview: true })}
               adminVehicleSearch={adminVehicleSearch}
               setAdminVehicleSearch={setAdminVehicleSearch}
               adminFilteredVehicles={adminFilteredVehicles}

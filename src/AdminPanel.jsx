@@ -5,6 +5,9 @@ export default function AdminPanel({
   editingIndex,
   cancelEdit,
   adminError,
+  adminWarnings,
+  dismissWarnings,
+  saveAnyway,
   adminForm,
   updateAdminField,
   handleAdminPhotos,
@@ -41,6 +44,44 @@ export default function AdminPanel({
             {adminError && (
               <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                 {adminError}
+              </div>
+            )}
+
+            {adminWarnings?.length > 0 && (
+              <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4">
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-amber-800">Revisa antes de subir</p>
+
+                <ul className="mt-3 space-y-3">
+                  {adminWarnings.map((warning, index) => (
+                    <li key={index} className="text-sm text-amber-900">
+                      <p className="font-bold">{warning.titulo}</p>
+                      <p className="text-amber-800">{warning.detalle}</p>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-3 text-xs text-amber-700">
+                  Si el dato viene así de la tarjeta de propiedad, guárdalo tal cual.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={dismissWarnings}
+                    className="rounded-full bg-zinc-950 px-5 py-2 text-sm font-bold text-white"
+                  >
+                    Corregir
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveAnyway}
+                    disabled={isSaving}
+                    className="rounded-full border border-amber-400 bg-white px-5 py-2 text-sm font-bold text-amber-900 disabled:opacity-60"
+                  >
+                    Guardar así
+                  </button>
+                </div>
               </div>
             )}
 
@@ -183,6 +224,8 @@ export default function AdminPanel({
             <textarea
               value={adminForm.description}
               onChange={(event) => updateAdminField("description", event.target.value)}
+              spellCheck="true"
+              lang="es"
               className="mt-4 min-h-28 w-full rounded-2xl bg-white px-4 py-3 outline-none"
               placeholder="Descripción del vehículo"
             />
