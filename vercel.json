@@ -2,6 +2,17 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     {
+      "source": "/vehiculos",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=vehiculos"
+    },
+    {
       "source": "/vehiculo/:slugid",
       "has": [
         {

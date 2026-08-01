@@ -11,6 +11,13 @@ const publicDir = join(__dirname, "..", "public");
 
 const pages = [
   {
+    slug: "vehiculos",
+    eyebrow: "Catálogo",
+    titleLines: ["Carros y camionetas", "en Barranquilla"],
+    chips: ["Fotos", "Precios", "Crédito", "Usados"],
+    domain: "jpmvehiculos.com/vehiculos",
+  },
+  {
     slug: "tramites",
     eyebrow: "Trámites",
     titleLines: ["Trámites", "vehiculares"],
