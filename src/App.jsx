@@ -46,7 +46,7 @@ const emptyForm = {
 // (Moto) dejan el campo como texto libre.
 const bodyTypesByVehicleType = {
   Carro: ["Sedán", "Hatchback", "Coupé", "Convertible", "Wagon"],
-  Camioneta: ["Wagon", "Platón", "Panel", "Furgón"],
+  Camioneta: ["SUV", "Wagon", "Platón", "Panel", "Furgón"],
 };
 
 const requiredFields = [
