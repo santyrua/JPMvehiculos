@@ -39,8 +39,8 @@ const entidades = [
   { name: "BBVA Colombia", logo: "/logos-credito/bbva.svg" },
   { name: "Banco Finandina", logo: "/logos-credito/finandina.png" },
   { name: "Sufi", logo: "/logos-credito/sufi.svg" },
-  { name: "Finanzauto", logo: "/logos-credito/finanzauto.png" },
-  { name: "Mobilize Financial Services", logo: "/logos-credito/mobilize.png" },
+  { name: "Finanzauto", logo: "/logos-credito/finanzauto.png", bg: "#016F6C" },
+  { name: "Mobilize Financial Services", logo: "/logos-credito/mobilize.png", bg: "#000000" },
   { name: "Toyota Financial Services", logo: "/logos-credito/toyotafs.svg" },
   { name: "Banco Santander Colombia", logo: "/logos-credito/santander.svg" },
   { name: "DeltaCredit", logo: "/logos-credito/deltacredit.png" },
@@ -99,7 +99,8 @@ export default function Credito({ nav, whatsappNumber = "573175792923" }) {
                 <div
                   key={entidad.name}
                   title={entidad.name}
-                  className="flex h-16 items-center justify-center rounded-xl bg-white px-3"
+                  style={entidad.bg ? { backgroundColor: entidad.bg } : undefined}
+                  className={"flex h-16 items-center justify-center rounded-xl px-3 " + (entidad.bg ? "" : "bg-white")}
                 >
                   {entidad.logo ? (
                     <img

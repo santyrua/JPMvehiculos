@@ -280,7 +280,7 @@ function VehicleCard({ vehicle, onOpen }) {
   };
 
   return (
-    <article onClick={() => onOpen(vehicle)} className="cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 text-white shadow-xl transition hover:-translate-y-1 hover:bg-white/[0.14]">
+    <article onClick={() => onOpen(vehicle, gallery[photoIndex])} className="cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 text-white shadow-xl transition hover:-translate-y-1 hover:bg-white/[0.14]">
       <div className="relative">
         <img src={gallery[photoIndex] || vehicle.image} alt={vehicle.name} loading="lazy" decoding="async" className="h-64 w-full object-cover" />
         <span className={"absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " + (vehicle.status === "Vendido" ? "bg-red-600 text-white" : "bg-emerald-400 text-zinc-950")}>
@@ -520,7 +520,9 @@ export default function JPMVehiculosWeb() {
   }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
 
   useEffect(() => {
-    if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
+    if (!selectedVehicle) return;
+    const gallery = (selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).filter(Boolean);
+    setActivePhoto((current) => (gallery.includes(current) ? current : gallery[0] || ""));
   }, [selectedVehicle]);
 
   const detailPhotos = selectedVehicle
@@ -1002,9 +1004,10 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function openVehicle(vehicle) {
+  function openVehicle(vehicle, photo) {
     setShowCatalog(true);
     setSelectedVehicle(vehicle);
+    if (photo) setActivePhoto(photo);
     pushPath(vehiclePath(vehicle));
   }
 
