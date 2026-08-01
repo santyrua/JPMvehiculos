@@ -529,9 +529,8 @@ export default function JPMVehiculosWeb() {
       const matchesType = vehicleType === "Todos" || vehicle.type === vehicleType;
       const matchesPrice = vehicle.priceNumber <= price;
       const matchesEco = sortOption !== "eco" || isEcoVehicle(vehicle);
-      const noVendido = vehicle.status !== "Vendido";
 
-      return matchesSearch && matchesType && matchesPrice && matchesEco && noVendido;
+      return matchesSearch && matchesType && matchesPrice && matchesEco;
     });
   }, [vehicles, searchTerm, vehicleType, price, sortOption]);
 
@@ -539,6 +538,11 @@ export default function JPMVehiculosWeb() {
     const getKm = (vehicle) => cleanNumber(vehicle.km);
 
    return [...filteredVehicles].sort((a, b) => {
+     const aIsSold = a.status === "Vendido";
+     const bIsSold = b.status === "Vendido";
+
+     if (aIsSold && !bIsSold) return 1;
+     if (!aIsSold && bIsSold) return -1;
      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
      if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
      if (sortOption === "anio-nuevo") return Number(b.year) - Number(a.year);
