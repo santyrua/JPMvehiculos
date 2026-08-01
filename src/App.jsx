@@ -444,6 +444,126 @@ function VehicleCard({ vehicle, onOpen }) {
   );
 }
 
+// Visor a pantalla completa con zoom. Se abre desde el detalle del vehículo y
+// conserva las flechas de paso, que quedan fijas y no se mueven con el zoom.
+function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const pointers = useRef(new Map());
+  const pinchStart = useRef(null);
+  const dragStart = useRef(null);
+
+  // Cada foto empieza sin zoom, para no heredar el encuadre de la anterior.
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [photo]);
+
+  useEffect(() => {
+    function handleKey(event) {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") onPrev();
+      if (event.key === "ArrowRight") onNext();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose, onPrev, onNext]);
+
+  function applyZoom(value) {
+    const next = Math.min(4, Math.max(1, value));
+    setZoom(next);
+    if (next === 1) setPan({ x: 0, y: 0 });
+  }
+
+  function toggleZoom() {
+    applyZoom(zoom > 1 ? 1 : 2.5);
+  }
+
+  function handlePointerDown(event) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      pinchStart.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), zoom };
+      dragStart.current = null;
+    } else if (zoom > 1) {
+      dragStart.current = { x: event.clientX - pan.x, y: event.clientY - pan.y };
+    }
+  }
+
+  function handlePointerMove(event) {
+    if (!pointers.current.has(event.pointerId)) return;
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointers.current.size === 2 && pinchStart.current) {
+      const [a, b] = [...pointers.current.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      applyZoom(pinchStart.current.zoom * (distance / pinchStart.current.distance));
+    } else if (dragStart.current && zoom > 1) {
+      setPan({ x: event.clientX - dragStart.current.x, y: event.clientY - dragStart.current.y });
+    }
+  }
+
+  function handlePointerUp(event) {
+    pointers.current.delete(event.pointerId);
+    if (pointers.current.size < 2) pinchStart.current = null;
+    if (pointers.current.size === 0) dragStart.current = null;
+  }
+
+  const boton = "flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl font-bold text-white transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-30";
+  const flecha = "absolute top-1/2 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-3xl font-bold text-white shadow-lg transition hover:bg-black";
+
+  return (
+    <div className="fixed inset-0 z-[90] flex flex-col bg-black">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white">
+          {index + 1} / {total}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => applyZoom(zoom - 0.5)} disabled={zoom <= 1} aria-label="Alejar" className={boton}>−</button>
+          <span className="w-14 text-center text-sm font-bold text-zinc-300">{Math.round(zoom * 100)}%</span>
+          <button type="button" onClick={() => applyZoom(zoom + 0.5)} disabled={zoom >= 4} aria-label="Acercar" className={boton}>+</button>
+          <button type="button" onClick={onClose} aria-label="Cerrar" className={boton + " ml-2 bg-white/20"}>×</button>
+        </div>
+      </div>
+
+      <div
+        className="relative flex-1 overflow-hidden"
+        style={{ touchAction: "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onDoubleClick={toggleZoom}
+      >
+        <img
+          src={photo}
+          alt={alt}
+          draggable={false}
+          className="absolute inset-0 m-auto max-h-full max-w-full select-none object-contain"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            cursor: zoom > 1 ? "grab" : "zoom-in",
+          }}
+        />
+
+        {total > 1 && index > 0 && (
+          <button type="button" onClick={onPrev} aria-label="Foto anterior" className={flecha + " left-4"}>‹</button>
+        )}
+        {total > 1 && index < total - 1 && (
+          <button type="button" onClick={onNext} aria-label="Foto siguiente" className={flecha + " right-4"}>›</button>
+        )}
+      </div>
+
+      <p className="px-4 pb-4 text-center text-xs text-zinc-500">
+        Pellizca para acercar, o toca dos veces. Arrastra para moverte por la foto.
+      </p>
+    </div>
+  );
+}
+
 function OverlayNav({
   current,
   onHome,
@@ -568,6 +688,7 @@ export default function JPMVehiculosWeb() {
   const [sortOption, setSortOption] = useState("recientes");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [activePhoto, setActivePhoto] = useState("");
+  const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [footerClicks, setFooterClicks] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -658,14 +779,15 @@ export default function JPMVehiculosWeb() {
   }
 
   useEffect(() => {
-    if (!selectedVehicle) return undefined;
+    // Con el visor abierto manda él; si no, cada flecha avanzaría dos fotos.
+    if (!selectedVehicle || photoViewerOpen) return undefined;
     function handleKey(event) {
       if (event.key === "ArrowLeft") stepDetailPhoto(-1);
       if (event.key === "ArrowRight") stepDetailPhoto(1);
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedVehicle, activePhoto]);
+  }, [selectedVehicle, activePhoto, photoViewerOpen]);
 
   useEffect(() => {
     const overlayOpen = showCatalog || showTramites || showCredito || showSeguros || showComparendos;
@@ -1201,6 +1323,7 @@ export default function JPMVehiculosWeb() {
 
   function closeVehicle() {
     setSelectedVehicle(null);
+    setPhotoViewerOpen(false);
     pushPath("/vehiculos");
   }
 
@@ -1663,6 +1786,18 @@ export default function JPMVehiculosWeb() {
                         </span>
                       </>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => setPhotoViewerOpen(true)}
+                      aria-label="Ver la foto más grande"
+                      title="Ver más grande"
+                      className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition hover:bg-black"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" />
+                      </svg>
+                    </button>
                   </div>
 
                   <div className="mt-4 grid grid-cols-3 gap-3">
@@ -1734,6 +1869,18 @@ export default function JPMVehiculosWeb() {
               </div>
             </div>
           </div>
+        )}
+
+        {photoViewerOpen && selectedVehicle && detailPhotos.length > 0 && (
+          <PhotoViewer
+            photo={activePhoto || selectedVehicle.image}
+            index={detailPhotoIndex}
+            total={detailPhotos.length}
+            alt={selectedVehicle.name}
+            onPrev={() => stepDetailPhoto(-1)}
+            onNext={() => stepDetailPhoto(1)}
+            onClose={() => setPhotoViewerOpen(false)}
+          />
         )}
       </main>
 
