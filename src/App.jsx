@@ -306,14 +306,20 @@ function VehicleCard({ vehicle, onOpen }) {
               ›
             </button>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
-              {gallery.map((photo, index) => (
-                <span
-                  key={index}
-                  className={"h-1.5 rounded-full transition-all " + (index === photoIndex ? "w-4 bg-white" : "w-1.5 bg-white/50")}
-                />
-              ))}
-            </div>
+            {gallery.length > 6 ? (
+              <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white">
+                {photoIndex + 1} / {gallery.length}
+              </span>
+            ) : (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+                {gallery.map((photo, index) => (
+                  <span
+                    key={index}
+                    className={"h-1.5 rounded-full transition-all " + (index === photoIndex ? "w-4 bg-white" : "w-1.5 bg-white/50")}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -568,8 +574,9 @@ export default function JPMVehiculosWeb() {
       const matchesType = vehicleType === "Todos" || vehicle.type === vehicleType;
       const matchesPrice = vehicle.priceNumber <= price;
       const matchesEco = sortOption !== "eco" || isEcoVehicle(vehicle);
+      const noVendido = vehicle.status !== "Vendido";
 
-      return matchesSearch && matchesType && matchesPrice && matchesEco;
+      return matchesSearch && matchesType && matchesPrice && matchesEco && noVendido;
     });
   }, [vehicles, searchTerm, vehicleType, price, sortOption]);
 
@@ -582,11 +589,6 @@ export default function JPMVehiculosWeb() {
    };
 
    return [...filteredVehicles].sort((a, b) => {
-     const aIsSold = a.status === "Vendido";
-     const bIsSold = b.status === "Vendido";
-
-     if (aIsSold && !bIsSold) return 1;
-     if (!aIsSold && bIsSold) return -1;
      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
      if (sortOption === "precio-mayor") return b.priceNumber - a.priceNumber;
      if (sortOption === "anio-nuevo") return Number(b.year) - Number(a.year);
