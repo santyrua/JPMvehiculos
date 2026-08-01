@@ -271,57 +271,13 @@ function LogoCard() {
 }
 
 function VehicleCard({ vehicle, onOpen }) {
-  const gallery = (vehicle.photos?.length ? vehicle.photos : [vehicle.image]).filter(Boolean);
-  const [photoIndex, setPhotoIndex] = useState(0);
-
-  const changePhoto = (step) => (event) => {
-    event.stopPropagation();
-    setPhotoIndex((current) => (current + step + gallery.length) % gallery.length);
-  };
-
   return (
-    <article onClick={() => onOpen(vehicle, gallery[photoIndex])} className="cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 text-white shadow-xl transition hover:-translate-y-1 hover:bg-white/[0.14]">
+    <article onClick={() => onOpen(vehicle)} className="cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 text-white shadow-xl transition hover:-translate-y-1 hover:bg-white/[0.14]">
       <div className="relative">
-        <img src={gallery[photoIndex] || vehicle.image} alt={vehicle.name} loading="lazy" decoding="async" className="h-64 w-full object-cover" />
+        <img src={vehicle.image} alt={vehicle.name} loading="lazy" decoding="async" className="h-64 w-full object-cover" />
         <span className={"absolute left-4 top-4 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] shadow-lg " + (vehicle.status === "Vendido" ? "bg-red-600 text-white" : "bg-emerald-400 text-zinc-950")}>
           {vehicle.status || "Disponible"}
         </span>
-
-        {gallery.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={changePhoto(-1)}
-              aria-label="Foto anterior"
-              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-xl font-bold text-white shadow-lg transition hover:bg-black/80"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={changePhoto(1)}
-              aria-label="Foto siguiente"
-              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-xl font-bold text-white shadow-lg transition hover:bg-black/80"
-            >
-              ›
-            </button>
-
-            {gallery.length > 6 ? (
-              <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white">
-                {photoIndex + 1} / {gallery.length}
-              </span>
-            ) : (
-              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
-                {gallery.map((photo, index) => (
-                  <span
-                    key={index}
-                    className={"h-1.5 rounded-full transition-all " + (index === photoIndex ? "w-4 bg-white" : "w-1.5 bg-white/50")}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
       </div>
       <div className="p-6">
         <div className="mb-5 flex items-start justify-between gap-3">
@@ -526,19 +482,18 @@ export default function JPMVehiculosWeb() {
   }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
 
   useEffect(() => {
-    if (!selectedVehicle) return;
-    const gallery = (selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).filter(Boolean);
-    setActivePhoto((current) => (gallery.includes(current) ? current : gallery[0] || ""));
+    if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
   }, [selectedVehicle]);
 
   const detailPhotos = selectedVehicle
     ? (selectedVehicle.photos?.length ? selectedVehicle.photos : [selectedVehicle.image]).filter(Boolean)
     : [];
+  const detailPhotoIndex = Math.max(0, detailPhotos.indexOf(activePhoto));
 
   function stepDetailPhoto(step) {
-    if (detailPhotos.length < 2) return;
-    const current = Math.max(0, detailPhotos.indexOf(activePhoto));
-    setActivePhoto(detailPhotos[(current + step + detailPhotos.length) % detailPhotos.length]);
+    const next = detailPhotoIndex + step;
+    if (next < 0 || next >= detailPhotos.length) return;
+    setActivePhoto(detailPhotos[next]);
   }
 
   useEffect(() => {
@@ -582,11 +537,6 @@ export default function JPMVehiculosWeb() {
 
   const sortedVehicles = useMemo(() => {
     const getKm = (vehicle) => cleanNumber(vehicle.km);
-
-    const isEco = (vehicle) => {
-     const fuel = String(vehicle.fuel || "").toLowerCase();
-     return fuel === "híbrido" || fuel === "hibrido" || fuel === "eléctrico" || fuel === "electrico";
-   };
 
    return [...filteredVehicles].sort((a, b) => {
      if (sortOption === "precio-menor") return a.priceNumber - b.priceNumber;
@@ -1006,10 +956,9 @@ export default function JPMVehiculosWeb() {
     window.scrollTo({ top: 0 });
   }
 
-  function openVehicle(vehicle, photo) {
+  function openVehicle(vehicle) {
     setShowCatalog(true);
     setSelectedVehicle(vehicle);
-    if (photo) setActivePhoto(photo);
     pushPath(vehiclePath(vehicle));
   }
 
@@ -1422,25 +1371,29 @@ export default function JPMVehiculosWeb() {
 
                     {detailPhotos.length > 1 && (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => stepDetailPhoto(-1)}
-                          aria-label="Foto anterior"
-                          className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-2xl font-bold text-white shadow-lg transition hover:bg-black"
-                        >
-                          ‹
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => stepDetailPhoto(1)}
-                          aria-label="Foto siguiente"
-                          className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-2xl font-bold text-white shadow-lg transition hover:bg-black"
-                        >
-                          ›
-                        </button>
+                        {detailPhotoIndex > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => stepDetailPhoto(-1)}
+                            aria-label="Foto anterior"
+                            className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-2xl font-bold text-white shadow-lg transition hover:bg-black"
+                          >
+                            ‹
+                          </button>
+                        )}
+                        {detailPhotoIndex < detailPhotos.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => stepDetailPhoto(1)}
+                            aria-label="Foto siguiente"
+                            className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-2xl font-bold text-white shadow-lg transition hover:bg-black"
+                          >
+                            ›
+                          </button>
+                        )}
 
                         <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white">
-                          {Math.max(0, detailPhotos.indexOf(activePhoto)) + 1} / {detailPhotos.length}
+                          {detailPhotoIndex + 1} / {detailPhotos.length}
                         </span>
                       </>
                     )}
