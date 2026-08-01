@@ -106,7 +106,7 @@ function validateVehicleForm(form, photos) {
 // Campos de una sola línea: se les quitan los espacios sobrantes al guardar.
 // Sin esto se cuelan valores como "Barranquilla " o "Hatchback ", que crean
 // duplicados invisibles (el catálogo llegó a tener 45 de 89 vehículos así).
-const singleLineFields = ["name", "brand", "model", "version", "year", "city", "color", "motor", "bodyType", "plateLastDigit"];
+const singleLineFields = ["name", "brand", "model", "version", "year", "city", "color", "motor", "doors", "bodyType", "plateLastDigit"];
 
 function cleanFormText(form) {
   const cleaned = { ...form };
@@ -238,6 +238,36 @@ function reviewVehicleForm(form, catalog) {
         });
       }
     }
+  }
+
+  // Números fuera de lo razonable. Igual que todo lo demás: solo se avisa,
+  // y "Guardar así" siempre manda.
+  const year = String(form.year || "").trim();
+  const maxYear = new Date().getFullYear() + 1;
+
+  if (year && !/^\d{4}$/.test(year)) {
+    warnings.push({ titulo: `El año "${year}" no parece un año`, detalle: "Van cuatro cifras, por ejemplo 2022." });
+  } else if (year && (Number(year) < 1950 || Number(year) > maxYear)) {
+    warnings.push({
+      titulo: `El año "${year}" está fuera de lo esperado`,
+      detalle: `Lo razonable va de 1950 a ${maxYear}. Revisa que no se haya colado una cifra.`,
+    });
+  }
+
+  // Las motos no llevan puertas, así que ahí no se revisa.
+  const doors = String(form.doors || "").trim();
+  if (doors && form.type !== "Moto" && !/^[2-5]$/.test(doors)) {
+    warnings.push({ titulo: `Puertas: "${doors}" es un valor raro`, detalle: "Lo normal está entre 2 y 5." });
+  }
+
+  // El "-" se acepta: es la marca que ya usa el catálogo cuando no se
+  // tiene el dato de la placa.
+  const plate = String(form.plateLastDigit || "").trim();
+  if (plate && plate !== "-" && !/^\d$/.test(plate)) {
+    warnings.push({
+      titulo: "El último dígito de la placa debe ser una sola cifra",
+      detalle: `Se escribió "${plate}"; va un solo número de 0 a 9, o "-" si no se tiene.`,
+    });
   }
 
   return warnings;
