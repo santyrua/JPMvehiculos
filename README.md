@@ -27,11 +27,6 @@ VITE_SUPABASE_ANON_KEY=TU_PUBLISHABLE_KEY
 
 ## Admin
 
-Para abrir el admin, toca 7 veces el footer:
-
-```txt
-© 2026 JPM Vehículos. Compra y venta de vehículos.
-```
-
-Si Supabase está conectado, entra con el correo y contraseña creados en Supabase Auth.
-Si no está conectado, usa la contraseña temporal del código.
+El acceso de administrador usa Supabase Auth: entra con el correo y la contraseña
+creados en Supabase. Sin las variables de entorno configuradas, el admin no está
+disponible.

@@ -29,7 +29,7 @@ export default function AdminLogin({
         <p className="mt-2 text-zinc-600">
           {hasSupabase
             ? "Ingresa tu correo y contraseña de Supabase Auth."
-            : "Supabase no está conectado. Usa la contraseña temporal."}
+            : "Supabase no está conectado, así que el admin no está disponible."}
         </p>
 
         {hasSupabase && (

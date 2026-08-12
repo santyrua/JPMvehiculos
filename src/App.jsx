@@ -17,7 +17,6 @@ const supabaseKey = viteEnv.VITE_SUPABASE_ANON_KEY || viteEnv.VITE_SUPABASE_PUBL
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 const hcaptchaSiteKey = viteEnv.VITE_HCAPTCHA_SITE_KEY || "";
 
-const FALLBACK_ADMIN_PASSWORD = "JPMontoya1041692941@";
 const VEHICLES_PER_PAGE = 9;
 
 const emptyForm = {
@@ -1274,8 +1273,9 @@ export default function JPMVehiculosWeb() {
       }
 
       setCaptchaToken("");
-    } else if (adminPassword !== FALLBACK_ADMIN_PASSWORD) {
-      alert("Contraseña incorrecta");
+    } else {
+      // Sin Supabase no hay con qué verificar la contraseña, así que no se entra.
+      alert("Supabase no está conectado: no se puede entrar al admin.");
       return;
     }
 
