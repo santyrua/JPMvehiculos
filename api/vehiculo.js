@@ -21,6 +21,15 @@ export default async function handler(req, res) {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
+  // JSON.stringify no escapa "<", así que un "</script>" dentro de los datos cerraría
+  // la etiqueta antes de tiempo. Se reemplazan por escapes unicode, que siguen siendo
+  // JSON válido y los lectores de datos estructurados entienden igual.
+  const jsonLd = (data) =>
+    JSON.stringify(data)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026");
+
   let vehicle = null;
   try {
     if (shortId) {
@@ -90,7 +99,7 @@ export default async function handler(req, res) {
     };
   }
 
-  const ldScript = ld ? `<script type="application/ld+json">${JSON.stringify(ld)}</script>` : "";
+  const ldScript = ld ? `<script type="application/ld+json">${jsonLd(ld)}</script>` : "";
 
   const html = `<!doctype html>
 <html lang="es">

@@ -72,6 +72,15 @@ export default async function handler(req, res) {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
+  // JSON.stringify no escapa "<", así que un "</script>" dentro de los datos cerraría
+  // la etiqueta antes de tiempo. Se reemplazan por escapes unicode, que siguen siendo
+  // JSON válido y los lectores de datos estructurados entienden igual.
+  const jsonLd = (data) =>
+    JSON.stringify(data)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026");
+
   const pageUrl = `${origin}${page.path}`;
   const image = `${origin}${page.image}`;
 
@@ -181,7 +190,7 @@ export default async function handler(req, res) {
 <meta name="twitter:description" content="${esc(page.description)}" />
 <meta name="twitter:image" content="${esc(image)}" />
 <link rel="canonical" href="${esc(pageUrl)}" />
-<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${jsonLd(ld)}</script>
 </head>
 <body>
 <h1>${esc(page.title)}</h1>
