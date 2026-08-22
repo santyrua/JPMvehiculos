@@ -538,7 +538,20 @@ function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
     applyZoom(zoom > 1 ? 1 : 2.5);
   }
 
+  // Las flechas de paso viven dentro de la zona de la foto. Si el gesto empieza
+  // sobre una, no capturamos el puntero: la captura desvía el clic al contenedor
+  // y el botón nunca se entera de que lo tocaron.
+  function estaSobreBoton(event) {
+    return event.target instanceof Element && !!event.target.closest("button");
+  }
+
+  function handleDoubleClick(event) {
+    if (estaSobreBoton(event)) return;
+    toggleZoom();
+  }
+
   function handlePointerDown(event) {
+    if (estaSobreBoton(event)) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
@@ -610,7 +623,7 @@ function PhotoViewer({ photo, index, total, alt, onPrev, onNext, onClose }) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onDoubleClick={toggleZoom}
+        onDoubleClick={handleDoubleClick}
       >
         <img
           src={photo}
