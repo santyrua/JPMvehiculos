@@ -61,6 +61,15 @@ using ((select auth.role()) = 'authenticated');
 -- Crea un bucket público en Storage llamado: vehicle-photos
 -- Luego ejecuta estas políticas para Storage:
 
+-- Tope de tamaño y tipos permitidos, aplicados por el servidor. La compresión
+-- del navegador ya deja las fotos en menos de 1 MB, pero eso es código del
+-- cliente: quien tenga el token del admin puede llamar a la API de Storage
+-- directamente y saltárselo. 10 MB es el doble de la foto más grande que hay.
+update storage.buckets
+set file_size_limit = 10485760,
+    allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp']
+where id = 'vehicle-photos';
+
 -- IMPORTANTE: el bucket es público, así que las imágenes se sirven por su URL pública
 -- sin necesidad de una política SELECT. NO agregues una política de lectura amplia sobre
 -- storage.objects: permitiría LISTAR todos los archivos del bucket (aviso de seguridad de
