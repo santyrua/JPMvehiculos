@@ -123,7 +123,9 @@ export default async function handler(req, res) {
     let vehicles = [];
     try {
       const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/vehicles?select=id,name,price_number,year,km,fuel,city,status&order=created_at.desc&limit=100`,
+        // El mismo tope que usa el sitemap: con 100 se quedaban por fuera del
+        // listado los vehículos más antiguos.
+        `${SUPABASE_URL}/rest/v1/vehicles?select=id,name,price_number,year,km,fuel,city,status&order=created_at.desc&limit=1000`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       if (response.ok) {
