@@ -1658,9 +1658,9 @@ export default function JPMVehiculosWeb() {
             <div className="grid gap-3 md:grid-cols-[1.25fr_0.85fr_1.25fr_1fr_auto]">
               <div className="flex items-center gap-3 rounded-2xl bg-zinc-100 px-4 py-3">
                 <span className="text-zinc-500">🔎</span>
-                <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="w-full bg-transparent outline-none placeholder:text-zinc-500" placeholder="Buscar por marca o modelo" />
+                <input id="campo-buscar" name="buscar" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="w-full bg-transparent outline-none placeholder:text-zinc-500" placeholder="Buscar por marca o modelo" aria-label="Buscar por marca o modelo" />
               </div>
-              <select value={vehicleType} onChange={(event) => setVehicleType(event.target.value)} className="rounded-2xl bg-zinc-100 px-4 py-3 outline-none">
+              <select id="campo-tipo" name="tipo" value={vehicleType} onChange={(event) => setVehicleType(event.target.value)} className="rounded-2xl bg-zinc-100 px-4 py-3 outline-none" aria-label="Tipo de vehículo">
                 <option value="Todos">Todos</option>
                 <option value="Carro">Carro</option>
                 <option value="Camioneta">Camioneta</option>
@@ -1671,10 +1671,10 @@ export default function JPMVehiculosWeb() {
                   <span className="font-medium text-zinc-700">Precio</span>
                   <span className="font-bold text-zinc-950">${formattedPrice}</span>
                 </div>
-                <input type="range" min="0" max="1000000000" step="1000000" value={price} onChange={(event) => setPrice(Number(event.target.value))} className="w-full accent-zinc-950" />
+                <input id="campo-precio" name="precio-maximo" type="range" min="0" max="1000000000" step="1000000" value={price} onChange={(event) => setPrice(Number(event.target.value))} className="w-full accent-zinc-950" aria-label="Precio máximo" />
                 <div className="mt-2 flex justify-between text-xs text-zinc-500"><span>$0</span><span>$1.000.000.000</span></div>
               </div>
-              <select value={sortOption} onChange={(event) => setSortOption(event.target.value)} className="rounded-2xl bg-zinc-100 px-4 py-3 font-semibold outline-none">
+              <select id="campo-orden" name="orden" value={sortOption} onChange={(event) => setSortOption(event.target.value)} className="rounded-2xl bg-zinc-100 px-4 py-3 font-semibold outline-none" aria-label="Ordenar resultados">
                 <option value="recientes">Ordenar</option>
                 <option value="eco">Híbrido / Eléctrico</option>
                 <option value="precio-menor">Menor precio</option>

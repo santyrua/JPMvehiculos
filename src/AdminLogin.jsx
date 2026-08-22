@@ -34,22 +34,30 @@ export default function AdminLogin({
 
         {hasSupabase && (
           <input
+            id="admin-correo"
+            name="email"
             type="email"
+            autoComplete="username"
             value={adminEmail}
             onChange={(event) => setAdminEmail(event.target.value)}
             className="mt-5 w-full rounded-2xl bg-zinc-100 px-4 py-3 outline-none"
             placeholder="Correo admin"
+            aria-label="Correo admin"
             autoFocus
           />
         )}
 
         <div className="relative mt-3">
           <input
+            id="admin-contrasena"
+            name="password"
             type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
             value={adminPassword}
             onChange={(event) => setAdminPassword(event.target.value)}
             className="w-full rounded-2xl bg-zinc-100 px-4 py-3 pr-12 outline-none"
             placeholder="Contraseña"
+            aria-label="Contraseña"
             autoFocus={!hasSupabase}
           />
 

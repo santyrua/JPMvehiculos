@@ -87,12 +87,15 @@ export default function AdminPanel({
 
             <div className="grid gap-4 md:grid-cols-2">
               <FormInput
+                name="nombre-vehiculo"
                 value={adminForm.name}
                 onChange={(value) => updateAdminField("name", value)}
                 placeholder="Nombre completo del vehículo"
               />
 
               <FormSelect
+                name="tipo"
+                label="Tipo de vehículo"
                 value={adminForm.type}
                 onChange={(value) => updateAdminField("type", value)}
               >
@@ -102,6 +105,8 @@ export default function AdminPanel({
               </FormSelect>
 
               <FormSelect
+                name="estado"
+                label="Estado"
                 value={adminForm.status}
                 onChange={(value) => updateAdminField("status", value)}
               >
@@ -110,54 +115,64 @@ export default function AdminPanel({
               </FormSelect>
 
               <FormInput
+                name="marca"
                 value={adminForm.brand}
                 onChange={(value) => updateAdminField("brand", value)}
                 placeholder="Marca"
               />
 
               <FormInput
+                name="modelo"
                 value={adminForm.model}
                 onChange={(value) => updateAdminField("model", value)}
                 placeholder="Modelo"
               />
 
               <FormInput
+                name="anio"
                 value={adminForm.year}
                 onChange={(value) => updateAdminField("year", value)}
                 placeholder="Año"
               />
 
               <FormInput
+                name="version"
                 value={adminForm.version}
                 onChange={(value) => updateAdminField("version", value)}
                 placeholder="Versión"
               />
 
               <FormInput
+                name="precio"
                 value={adminForm.price}
                 onChange={(value) => updateAdminField("price", value.replace(/[^0-9]/g, ""))}
                 placeholder="Precio sin puntos"
               />
 
               <FormInput
+                name="kilometros"
                 value={adminForm.km}
                 onChange={(value) => updateAdminField("km", value.replace(/[^0-9]/g, ""))}
                 placeholder="Kilómetros sin puntos"
               />
 
               <FormInput
+                name="ciudad"
                 value={adminForm.city}
                 onChange={(value) => updateAdminField("city", value)}
                 placeholder="Ciudad"
               />
 
               <FormInput
+                name="color"
                 value={adminForm.color}
                 onChange={(value) => updateAdminField("color", value)}
                 placeholder="Color"
               />
 
               <FormSelect
+                name="combustible"
+                label="Tipo de combustible"
                 value={adminForm.fuel}
                 onChange={(value) => updateAdminField("fuel", value)}
               >
@@ -168,6 +183,8 @@ export default function AdminPanel({
               </FormSelect>
 
               <FormSelect
+                name="transmision"
+                label="Transmisión"
                 value={adminForm.transmission}
                 onChange={(value) => updateAdminField("transmission", value)}
               >
@@ -177,12 +194,14 @@ export default function AdminPanel({
               </FormSelect>
 
               <FormInput
+                name="motor"
                 value={adminForm.motor}
                 onChange={(value) => updateAdminField("motor", value)}
                 placeholder="Motor"
               />
 
               <FormInput
+                name="puertas"
                 value={adminForm.doors}
                 onChange={(value) => updateAdminField("doors", value)}
                 placeholder="Puertas"
@@ -190,6 +209,8 @@ export default function AdminPanel({
 
               {bodyTypeOptions ? (
                 <FormSelect
+                  name="carroceria"
+                  label="Tipo de carrocería"
                   value={adminForm.bodyType}
                   onChange={(value) => updateAdminField("bodyType", value)}
                 >
@@ -208,6 +229,7 @@ export default function AdminPanel({
                 </FormSelect>
               ) : (
                 <FormInput
+                  name="carroceria"
                   value={adminForm.bodyType}
                   onChange={(value) => updateAdminField("bodyType", value)}
                   placeholder="Tipo de carrocería"
@@ -215,6 +237,7 @@ export default function AdminPanel({
               )}
 
               <FormInput
+                name="digito-placa"
                 value={adminForm.plateLastDigit}
                 onChange={(value) => updateAdminField("plateLastDigit", value)}
                 placeholder="Último dígito de la placa"
@@ -222,18 +245,23 @@ export default function AdminPanel({
             </div>
 
             <textarea
+              id="campo-descripcion"
+              name="descripcion"
               value={adminForm.description}
               onChange={(event) => updateAdminField("description", event.target.value)}
               spellCheck="true"
               lang="es"
               className="mt-4 min-h-28 w-full rounded-2xl bg-white px-4 py-3 outline-none"
               placeholder="Descripción del vehículo"
+              aria-label="Descripción del vehículo"
             />
 
             <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-white p-5">
-              <label className="mb-3 block font-bold">Fotos del vehículo</label>
+              <label htmlFor="campo-fotos" className="mb-3 block font-bold">Fotos del vehículo</label>
 
               <input
+                id="campo-fotos"
+                name="fotos"
                 type="file"
                 accept="image/*"
                 multiple
@@ -303,10 +331,14 @@ export default function AdminPanel({
                 <span className="text-zinc-500">🔎</span>
 
                 <input
+                  id="campo-buscar-admin"
+                  name="buscar-vehiculo"
+                  type="search"
                   value={adminVehicleSearch}
                   onChange={(event) => setAdminVehicleSearch(event.target.value)}
                   className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-zinc-500"
                   placeholder="Buscar por marca, modelo, año, precio, ciudad..."
+                  aria-label="Buscar vehículo cargado"
                 />
               </div>
             </div>

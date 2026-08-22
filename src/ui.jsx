@@ -16,13 +16,34 @@ export function Button({ children, href, onClick, type = "button", disabled = fa
   );
 }
 
-export function FormInput({ value, onChange, placeholder }) {
-  return <input value={value} onChange={(event) => onChange(event.target.value)} className="rounded-2xl bg-white px-4 py-3 outline-none" placeholder={placeholder} />;
+// El "name" sirve para tres cosas: que el navegador pueda autocompletar y
+// recordar lo escrito, que el campo tenga un id propio, y que un lector de
+// pantalla lo anuncie. El placeholder no basta: desaparece al escribir.
+export function FormInput({ value, onChange, placeholder, name }) {
+  return (
+    <input
+      id={name ? `campo-${name}` : undefined}
+      name={name}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="rounded-2xl bg-white px-4 py-3 outline-none"
+      placeholder={placeholder}
+      aria-label={placeholder}
+    />
+  );
 }
 
-export function FormSelect({ value, onChange, children }) {
+// El select no tiene placeholder, así que la etiqueta va aparte.
+export function FormSelect({ value, onChange, children, name, label }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="rounded-2xl bg-white px-4 py-3 outline-none">
+    <select
+      id={name ? `campo-${name}` : undefined}
+      name={name}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="rounded-2xl bg-white px-4 py-3 outline-none"
+      aria-label={label}
+    >
       {children}
     </select>
   );
