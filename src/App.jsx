@@ -10,6 +10,9 @@ const Tramites = lazy(() => import("./Tramites.jsx"));
 const Credito = lazy(() => import("./Credito.jsx"));
 const Seguros = lazy(() => import("./Seguros.jsx"));
 const Comparendos = lazy(() => import("./Comparendos.jsx"));
+const Cuenta = lazy(() => import("./Cuenta.jsx"));
+const MisVehiculos = lazy(() => import("./MisVehiculos.jsx"));
+const SolicitudesAdmin = lazy(() => import("./SolicitudesAdmin.jsx"));
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -661,6 +664,7 @@ function OverlayNav({
   onComparendos,
   onNosotros,
   onContacto,
+  onVender,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -671,7 +675,8 @@ function OverlayNav({
     { key: "seguros", label: "Seguros", onClick: onSeguros },
     { key: "comparendos", label: "Comparendos", onClick: onComparendos },
     { key: "nosotros", label: "Nosotros", onClick: onNosotros },
-    { key: "vender", label: "Contáctanos y vende tu vehículo", onClick: onContacto },
+    { key: "vender", label: "Vende tu vehículo", onClick: onVender },
+    { key: "contacto", label: "Contáctanos", onClick: onContacto },
   ];
 
   return (
@@ -762,6 +767,7 @@ export default function JPMVehiculosWeb() {
   const [showCredito, setShowCredito] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/credito"));
   const [showSeguros, setShowSeguros] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/seguros"));
   const [showComparendos, setShowComparendos] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/comparendos"));
+  const [showVender, setShowVender] = useState(() => typeof window !== "undefined" && window.location.pathname.startsWith("/vender"));
   const [pendingShortId, setPendingShortId] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -779,6 +785,13 @@ export default function JPMVehiculosWeb() {
   const [footerClicks, setFooterClicks] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  // Sesión de Supabase, sea del negocio o de alguien del público. Tener sesión
+  // no es ser admin: eso lo decide la tabla admins.
+  const [session, setSession] = useState(null);
+  // Solicitud del público que está precargada en el formulario, para marcarla
+  // como publicada cuando se guarde el vehículo.
+  const [solicitudEnCurso, setSolicitudEnCurso] = useState(null);
+  const [recargarSolicitudes, setRecargarSolicitudes] = useState(0);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
@@ -794,6 +807,26 @@ export default function JPMVehiculosWeb() {
 
   const whatsappUrl = "https://wa.me/573175792923?text=" + encodeURIComponent("Hola, estoy interesado en un vehículo de JPM Vehículos.");
   const formattedPrice = new Intl.NumberFormat("es-CO").format(price);
+
+  // Una cuenta es de administrador si está en la tabla admins, no por tener
+  // sesión. La política de admins solo deja ver la propia fila, así que esto
+  // responde por el usuario que pregunta y por nadie más.
+  async function comprobarAdmin(userId) {
+    if (!supabase || !userId) return false;
+
+    const { data, error } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      return false;
+    }
+
+    return !!data;
+  }
 
   async function fetchVehicles() {
     if (!supabase) return;
@@ -818,11 +851,26 @@ export default function JPMVehiculosWeb() {
   useEffect(() => {
     fetchVehicles();
 
-    if (!supabase) return;
+    if (!supabase) return undefined;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setIsAdminLoggedIn(true);
+    // Antes bastaba con tener sesión para dibujar el panel. Desde que el
+    // público puede registrarse eso ya no sirve: un cliente con cuenta vería
+    // el panel del negocio. Quien manda es la tabla admins (y las políticas
+    // RLS, que son la protección de verdad).
+    async function aplicarSesion(sesion) {
+      setSession(sesion || null);
+      setIsAdminLoggedIn(sesion ? await comprobarAdmin(sesion.user.id) : false);
+    }
+
+    supabase.auth.getSession().then(({ data }) => aplicarSesion(data.session));
+
+    const { data: suscripcion } = supabase.auth.onAuthStateChange((_evento, sesion) => {
+      // Llamar a otros métodos de supabase dentro de este callback puede
+      // quedarse colgado, así que se sale del callback antes de consultar.
+      setTimeout(() => aplicarSesion(sesion), 0);
     });
+
+    return () => suscripcion.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -842,13 +890,14 @@ export default function JPMVehiculosWeb() {
 
   useEffect(() => {
     if (selectedVehicle) document.title = `${selectedVehicle.name} | JPM Vehículos`;
+    else if (showVender) document.title = "Vende tu vehículo en Barranquilla | JPM Vehículos";
     else if (showComparendos) document.title = "Curso de Seguridad Vial y descuento de comparendos en Barranquilla | JPM Vehículos";
     else if (showSeguros) document.title = "Seguro Todo Riesgo Vehicular en Barranquilla | JPM Vehículos";
     else if (showCredito) document.title = "Crédito vehicular en Barranquilla | JPM Vehículos";
     else if (showTramites) document.title = "Trámites vehiculares en Barranquilla | JPM Vehículos";
     else if (showCatalog) document.title = "Vehículos disponibles | JPM Vehículos";
     else document.title = "JPM Vehículos | Compra y venta de vehículos en Barranquilla";
-  }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
+  }, [selectedVehicle, showCatalog, showTramites, showCredito, showSeguros, showComparendos, showVender]);
 
   useEffect(() => {
     if (selectedVehicle) setActivePhoto(selectedVehicle.photos?.[0] || selectedVehicle.image || "");
@@ -882,14 +931,14 @@ export default function JPMVehiculosWeb() {
   }, [selectedVehicle, activePhoto, photoViewerOpen]);
 
   useEffect(() => {
-    const overlayOpen = showCatalog || showTramites || showCredito || showSeguros || showComparendos;
+    const overlayOpen = showCatalog || showTramites || showCredito || showSeguros || showComparendos || showVender;
     document.body.style.overflow = overlayOpen ? "hidden" : "";
     document.body.style.overscrollBehavior = overlayOpen ? "none" : "";
     return () => {
       document.body.style.overflow = "";
       document.body.style.overscrollBehavior = "";
     };
-  }, [showCatalog, showTramites, showCredito, showSeguros, showComparendos]);
+  }, [showCatalog, showTramites, showCredito, showSeguros, showComparendos, showVender]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1109,11 +1158,68 @@ export default function JPMVehiculosWeb() {
     document.getElementById("admin")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  // Trae al formulario de publicación un vehículo que subió alguien del
+  // público. Las fotos se bajan del bucket privado y entran como archivos
+  // nuevos, así que al guardar se suben a vehicle-photos igual que si el
+  // negocio las hubiera elegido a mano.
+  //
+  // Lo que no se precarga (motor, puertas, carrocería, último dígito de la
+  // placa) es justo lo que hay que mirar en la tarjeta de propiedad, y el
+  // nombre queda como borrador para que el negocio lo escriba como va.
+  async function precargarSolicitud(solicitud) {
+    setEditingIndex(null);
+    setAdminError("");
+    setAdminWarnings([]);
+
+    setAdminForm({
+      ...emptyForm,
+      name: [solicitud.brand, solicitud.model, solicitud.version].filter(Boolean).join(" "),
+      type: solicitud.type || "Carro",
+      brand: solicitud.brand || "",
+      model: solicitud.model || "",
+      version: solicitud.version || "",
+      year: solicitud.year || "",
+      price: String(solicitud.price_number || ""),
+      km: String(solicitud.km || "").replace(/[^0-9]/g, ""),
+      fuel: solicitud.fuel || "Gasolina",
+      city: solicitud.city || "Barranquilla",
+      color: solicitud.color || "",
+      transmission: solicitud.transmission || "Automática",
+      description: solicitud.comments || "",
+      status: "Disponible",
+    });
+
+    const rutas = solicitud.photos || [];
+    const fotos = [];
+
+    if (rutas.length > 0 && supabase) {
+      const { data: firmadas, error } = await supabase.storage
+        .from("request-photos")
+        .createSignedUrls(rutas, 3600);
+
+      if (error) throw error;
+
+      for (const item of firmadas || []) {
+        if (!item.signedUrl) continue;
+        const respuesta = await fetch(item.signedUrl);
+        if (!respuesta.ok) continue;
+        const blob = await respuesta.blob();
+        const nombre = String(item.path || "foto.jpg").split("/").pop() || "foto.jpg";
+        fotos.push({ url: item.signedUrl, file: new File([blob], nombre, { type: "image/jpeg" }) });
+      }
+    }
+
+    setAdminPhotos(fotos);
+    setSolicitudEnCurso(solicitud.id);
+    document.getElementById("admin")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   function cancelEdit() {
     setEditingIndex(null);
     setAdminForm({ ...emptyForm });
     setAdminPhotos([]);
     setAdminError("");
+    setSolicitudEnCurso(null);
   }
 
   function removeAdminPhoto(indexToRemove) {
@@ -1204,14 +1310,38 @@ export default function JPMVehiculosWeb() {
       };
 
       const vehicleToEdit = editingIndex !== null ? vehicles[editingIndex] : null;
-      const request = vehicleToEdit?.dbId ? supabase.from("vehicles").update(payload).eq("id", vehicleToEdit.dbId) : supabase.from("vehicles").insert(payload);
-      const { error } = await request;
+      const request = vehicleToEdit?.dbId
+        ? supabase.from("vehicles").update(payload).eq("id", vehicleToEdit.dbId).select("id").single()
+        : supabase.from("vehicles").insert(payload).select("id").single();
+      const { data: guardado, error } = await request;
 
       if (error) {
         console.error(error);
         setAdminError("No se pudo guardar en Supabase. Revisa las políticas de la tabla vehicles.");
         setIsSaving(false);
         return;
+      }
+
+      // Si el vehículo venía de una solicitud del público, esa solicitud queda
+      // publicada y el dueño lo ve así en su cuenta.
+      if (solicitudEnCurso) {
+        const { error: falloSolicitud } = await supabase
+          .from("vehicle_requests")
+          .update({
+            status: "publicada",
+            reviewed_at: new Date().toISOString(),
+            published_vehicle_id: guardado?.id || null,
+          })
+          .eq("id", solicitudEnCurso);
+
+        if (falloSolicitud) {
+          console.error(falloSolicitud);
+          // El vehículo ya quedó publicado: solo falló marcar la solicitud.
+          alert("El vehículo se publicó, pero no se pudo marcar la solicitud como publicada. Márcala a mano desde la lista de solicitudes.");
+        }
+
+        setSolicitudEnCurso(null);
+        setRecargarSolicitudes((numero) => numero + 1);
       }
 
       await fetchVehicles();
@@ -1286,6 +1416,18 @@ export default function JPMVehiculosWeb() {
       }
 
       setCaptchaToken("");
+
+      // Entrar por esta puerta no vuelve administrador a nadie. Si la cuenta
+      // no está en admins se queda como una cuenta normal del público, y las
+      // políticas RLS no la dejarían escribir aunque el panel se dibujara.
+      const { data: datosUsuario } = await supabase.auth.getUser();
+
+      if (!(await comprobarAdmin(datosUsuario?.user?.id))) {
+        setShowAdminLogin(false);
+        setAdminPassword("");
+        alert('Esa cuenta no es de administrador. Si quieres vender tu vehículo, entra por "Vende tu vehículo".');
+        return;
+      }
     } else {
       // Sin Supabase no hay con qué verificar la contraseña, así que no se entra.
       alert("Supabase no está conectado: no se puede entrar al admin.");
@@ -1294,11 +1436,7 @@ export default function JPMVehiculosWeb() {
 
     setIsAdminLoggedIn(true);
     setShowAdminLogin(false);
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
+    mostrarSolo(null);
     setSelectedVehicle(null);
     setAdminPassword("");
     pushPath("/");
@@ -1335,77 +1473,68 @@ export default function JPMVehiculosWeb() {
     return "/vehiculo/" + (shortId ? `${slug}-${shortId}` : slug);
   }
 
+  // Las capas son excluyentes: abrir una cierra las demás. Antes cada función
+  // de navegación apagaba las otras a mano, cinco líneas cada vez; con una
+  // sexta capa eso era un olvido esperando a pasar.
+  function mostrarSolo(capa) {
+    setShowCatalog(capa === "vehiculos");
+    setShowTramites(capa === "tramites");
+    setShowCredito(capa === "credito");
+    setShowSeguros(capa === "seguros");
+    setShowComparendos(capa === "comparendos");
+    setShowVender(capa === "vender");
+  }
+
   function applyLocationToState() {
     const path = typeof window !== "undefined" ? window.location.pathname : "/";
+
     if (path.startsWith("/vehiculo/")) {
       const last = path.slice("/vehiculo/".length).replace(/\/+$/, "").split("-").pop();
-      setShowCatalog(true);
-      setShowTramites(false);
-      setShowCredito(false);
-      setShowSeguros(false);
-      setShowComparendos(false);
+      mostrarSolo("vehiculos");
       setPendingShortId(last || null);
-    } else if (path.startsWith("/vehiculos")) {
-      setShowCatalog(true);
-      setShowTramites(false);
-      setShowCredito(false);
-      setShowSeguros(false);
-      setShowComparendos(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
-    } else if (path.startsWith("/tramites")) {
-      setShowTramites(true);
-      setShowCatalog(false);
-      setShowCredito(false);
-      setShowSeguros(false);
-      setShowComparendos(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
-    } else if (path.startsWith("/credito")) {
-      setShowCredito(true);
-      setShowCatalog(false);
-      setShowTramites(false);
-      setShowSeguros(false);
-      setShowComparendos(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
-    } else if (path.startsWith("/seguros")) {
-      setShowSeguros(true);
-      setShowCatalog(false);
-      setShowTramites(false);
-      setShowCredito(false);
-      setShowComparendos(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
-    } else if (path.startsWith("/comparendos")) {
-      setShowComparendos(true);
-      setShowCatalog(false);
-      setShowTramites(false);
-      setShowCredito(false);
-      setShowSeguros(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
-    } else {
-      setShowCatalog(false);
-      setShowTramites(false);
-      setShowCredito(false);
-      setShowSeguros(false);
-      setShowComparendos(false);
-      setSelectedVehicle(null);
-      setPendingShortId(null);
+      return;
     }
+
+    const rutas = ["vehiculos", "tramites", "credito", "seguros", "comparendos", "vender"];
+    const capa = rutas.find((ruta) => path.startsWith(`/${ruta}`)) || null;
+
+    mostrarSolo(capa);
+    setSelectedVehicle(null);
+    setPendingShortId(null);
+  }
+
+  // Abrir una capa es siempre lo mismo: mostrarla, cerrar el detalle y el
+  // menú, cambiar la ruta y subir la vista. El nombre de la capa es su ruta.
+  function abrirCapa(capa) {
+    mostrarSolo(capa);
+    setSelectedVehicle(null);
+    setMenuOpen(false);
+    pushPath(`/${capa}`);
+    window.scrollTo({ top: 0 });
   }
 
   function openCatalog() {
-    setShowCatalog(true);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
-    setSelectedVehicle(null);
-    setMenuOpen(false);
-    pushPath("/vehiculos");
-    window.scrollTo({ top: 0 });
+    abrirCapa("vehiculos");
+  }
+
+  function openTramites() {
+    abrirCapa("tramites");
+  }
+
+  function openCredito() {
+    abrirCapa("credito");
+  }
+
+  function openSeguros() {
+    abrirCapa("seguros");
+  }
+
+  function openComparendos() {
+    abrirCapa("comparendos");
+  }
+
+  function openVender() {
+    abrirCapa("vender");
   }
 
   function openVehicle(vehicle) {
@@ -1420,60 +1549,8 @@ export default function JPMVehiculosWeb() {
     pushPath("/vehiculos");
   }
 
-  function openTramites() {
-    setShowTramites(true);
-    setShowCatalog(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
-    setSelectedVehicle(null);
-    setMenuOpen(false);
-    pushPath("/tramites");
-    window.scrollTo({ top: 0 });
-  }
-
-  function openCredito() {
-    setShowCredito(true);
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
-    setSelectedVehicle(null);
-    setMenuOpen(false);
-    pushPath("/credito");
-    window.scrollTo({ top: 0 });
-  }
-
-  function openSeguros() {
-    setShowSeguros(true);
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowComparendos(false);
-    setSelectedVehicle(null);
-    setMenuOpen(false);
-    pushPath("/seguros");
-    window.scrollTo({ top: 0 });
-  }
-
-  function openComparendos() {
-    setShowComparendos(true);
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setSelectedVehicle(null);
-    setMenuOpen(false);
-    pushPath("/comparendos");
-    window.scrollTo({ top: 0 });
-  }
-
   function goHome() {
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
+    mostrarSolo(null);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/");
@@ -1481,11 +1558,7 @@ export default function JPMVehiculosWeb() {
   }
 
   function goToSection(id) {
-    setShowCatalog(false);
-    setShowTramites(false);
-    setShowCredito(false);
-    setShowSeguros(false);
-    setShowComparendos(false);
+    mostrarSolo(null);
     setSelectedVehicle(null);
     setMenuOpen(false);
     pushPath("/");
@@ -1506,6 +1579,7 @@ export default function JPMVehiculosWeb() {
         onComparendos={openComparendos}
         onNosotros={() => goToSection("nosotros")}
         onContacto={() => goToSection("vender")}
+        onVender={openVender}
       />
     );
   }
@@ -1602,7 +1676,8 @@ export default function JPMVehiculosWeb() {
             <button onClick={openSeguros} className="transition hover:text-white">Seguros</button>
             <button onClick={openComparendos} className="transition hover:text-white">Comparendos</button>
             <a className="transition hover:text-white" href="#nosotros">Nosotros</a>
-            <a className="transition hover:text-white" href="#vender">Contáctanos y vende tu vehículo</a>
+            <button onClick={openVender} className="whitespace-nowrap transition hover:text-white">Vende tu vehículo</button>
+            <a className="transition hover:text-white" href="#vender">Contáctanos</a>
           </nav>
 
           <div className="hidden rounded-full bg-white px-6 py-3 font-semibold text-zinc-950 md:inline-flex">Marcando La Diferencia</div>
@@ -1618,7 +1693,8 @@ export default function JPMVehiculosWeb() {
               <button onClick={openSeguros} className="text-left">Seguros</button>
               <button onClick={openComparendos} className="text-left">Comparendos</button>
               <a onClick={() => setMenuOpen(false)} href="#nosotros">Nosotros</a>
-              <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos y vende tu vehículo</a>
+              <button onClick={openVender} className="text-left">Vende tu vehículo</button>
+              <a onClick={() => setMenuOpen(false)} href="#vender">Contáctanos</a>
               <Button href={whatsappUrl} className="w-full bg-white text-zinc-950 hover:bg-zinc-200">Escribir por WhatsApp</Button>
             </div>
           </div>
@@ -1637,7 +1713,7 @@ export default function JPMVehiculosWeb() {
                 <Button onClick={openCredito} className="bg-zinc-950 text-white hover:bg-zinc-800">Créditos</Button>
                 <Button onClick={openSeguros} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Ver seguros</Button>
                 <Button onClick={openComparendos} className="bg-zinc-950 text-white hover:bg-zinc-800">Comparendos</Button>
-                <Button href="#vender" className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
+                <Button onClick={openVender} className="border border-black/20 bg-white text-zinc-950 hover:bg-zinc-100">Quiero vender mi carro</Button>
               </div>
               <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
                 <div><p className="text-3xl font-black">+25 mil</p><p className="text-sm text-zinc-500">Seguidores</p></div>
@@ -1731,7 +1807,19 @@ export default function JPMVehiculosWeb() {
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-400">Contacta y vende</p>
           <h2 className="text-4xl font-black tracking-tight md:text-5xl">Habla con nosotros y vende tu vehículo.</h2>
           <p className="mt-5 text-lg leading-8 text-zinc-300">Da el primer paso hoy. Cuéntanos qué vehículo deseas vender o buscar, y nosotros nos encargaremos de acompañarte durante todo el proceso.</p>
-          <div id="contacto" className="mt-8 rounded-[2rem] border border-white/10 bg-white/10 p-6">
+
+          <div className="mt-8 rounded-[2rem] border border-amber-300/30 bg-amber-300/10 p-6">
+            <h3 className="text-2xl font-bold">Súbelo tú mismo</h3>
+            <p className="mt-2 text-zinc-300">
+              Crea tu cuenta, sube las fotos y los datos de tu vehículo, y sigue desde ahí en qué
+              va tu solicitud. Nosotros la revisamos y te contactamos.
+            </p>
+            <Button onClick={openVender} className="mt-5 w-full bg-amber-300 text-zinc-950 hover:bg-amber-200">
+              Subir mi vehículo
+            </Button>
+          </div>
+
+          <div id="contacto" className="mt-6 rounded-[2rem] border border-white/10 bg-white/10 p-6">
             <h3 className="mb-4 text-2xl font-bold">Contacto directo</h3>
             <div className="space-y-3 text-zinc-300">
               <div className="flex items-center gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true" className="shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.334.101 11.892c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a12.062 12.062 0 005.71 1.447h.006c6.585 0 11.946-5.335 11.949-11.893a11.821 11.821 0 00-3.484-8.413z"/></svg> +57 317 579 2923</div>
@@ -1771,6 +1859,22 @@ export default function JPMVehiculosWeb() {
           </Suspense>
         )}
 
+        {/* Mismo sitio para las dos caras: sin sesión pide cuenta, con sesión
+            muestra el área de quien entró. */}
+        {showVender && (
+          <Suspense fallback={null}>
+            {session ? (
+              <MisVehiculos nav={overlayNav("vender")} supabase={supabase} session={session} />
+            ) : (
+              <Cuenta
+                nav={overlayNav("vender")}
+                supabase={supabase}
+                hcaptchaSiteKey={hcaptchaSiteKey}
+              />
+            )}
+          </Suspense>
+        )}
+
         {isAdminLoggedIn && (
           <Suspense fallback={null}>
             <AdminPanel
@@ -1796,6 +1900,16 @@ export default function JPMVehiculosWeb() {
               editVehicle={editVehicle}
               deleteVehicle={deleteVehicle}
               closeAdmin={closeAdmin}
+            />
+          </Suspense>
+        )}
+
+        {isAdminLoggedIn && (
+          <Suspense fallback={null}>
+            <SolicitudesAdmin
+              supabase={supabase}
+              onPrefill={precargarSolicitud}
+              recargar={recargarSolicitudes}
             />
           </Suspense>
         )}

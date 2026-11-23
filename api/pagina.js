@@ -49,6 +49,14 @@ const PAGES = {
     image: "/og-comparendos.jpg",
     name: "Curso de Seguridad Vial",
   },
+  vender: {
+    path: "/vender",
+    title: "Vende tu carro o camioneta en Barranquilla | JPM Vehículos",
+    description:
+      "Vende tu vehículo con JPM Vehículos: crea tu cuenta, sube las fotos y los datos de tu carro, camioneta o moto, y nosotros te contactamos. Avalúo y asesoría en Barranquilla.",
+    image: "/og-vender.jpg",
+    name: "Vende tu vehículo",
+  },
 };
 
 export default async function handler(req, res) {

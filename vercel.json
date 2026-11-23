@@ -67,6 +67,17 @@
       ],
       "destination": "/api/pagina?slug=comparendos"
     },
+    {
+      "source": "/vender",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Google-InspectionTool|vkShare|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/pagina?slug=vender"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
