@@ -14,6 +14,7 @@ const Comparendos = lazy(() => import("./Comparendos.jsx"));
 const Cuenta = lazy(() => import("./Cuenta.jsx"));
 const MisVehiculos = lazy(() => import("./MisVehiculos.jsx"));
 const SolicitudesAdmin = lazy(() => import("./SolicitudesAdmin.jsx"));
+const CambiarContrasena = lazy(() => import("./CambiarContrasena.jsx"));
 
 const viteEnv = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL || "";
@@ -787,6 +788,14 @@ export default function JPMVehiculosWeb() {
   // como publicada cuando se guarde el vehículo.
   const [solicitudEnCurso, setSolicitudEnCurso] = useState(null);
   const [recargarSolicitudes, setRecargarSolicitudes] = useState(0);
+  // Quien abre el enlace de "olvidé mi contraseña" viene a una sola cosa, así
+  // que se le muestra una pantalla propia en vez del área completa de su
+  // cuenta. Supabase lo avisa con el evento PASSWORD_RECOVERY; el
+  // type=recovery de la URL es el respaldo, por si el evento se dispara antes
+  // de que el listener esté puesto.
+  const [recuperandoContrasena, setRecuperandoContrasena] = useState(
+    () => typeof window !== "undefined" && (window.location.hash || "").includes("type=recovery")
+  );
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
@@ -859,7 +868,9 @@ export default function JPMVehiculosWeb() {
 
     supabase.auth.getSession().then(({ data }) => aplicarSesion(data.session));
 
-    const { data: suscripcion } = supabase.auth.onAuthStateChange((_evento, sesion) => {
+    const { data: suscripcion } = supabase.auth.onAuthStateChange((evento, sesion) => {
+      if (evento === "PASSWORD_RECOVERY") setRecuperandoContrasena(true);
+
       // Llamar a otros métodos de supabase dentro de este callback puede
       // quedarse colgado, así que se sale del callback antes de consultar.
       setTimeout(() => aplicarSesion(sesion), 0);
@@ -873,6 +884,13 @@ export default function JPMVehiculosWeb() {
     window.addEventListener("popstate", applyLocationToState);
     return () => window.removeEventListener("popstate", applyLocationToState);
   }, []);
+
+  // Si Supabase mandó el enlace a la raíz en vez de a /vender (pasa cuando
+  // cae en el Site URL), igual hay que abrir la capa para que se vea la
+  // pantalla de contraseña nueva.
+  useEffect(() => {
+    if (recuperandoContrasena) mostrarSolo("vender");
+  }, [recuperandoContrasena]);
 
   useEffect(() => {
     if (!pendingShortId) return;
@@ -1862,7 +1880,19 @@ export default function JPMVehiculosWeb() {
             muestra el área de quien entró. */}
         {showVender && (
           <Suspense fallback={null}>
-            {session ? (
+            {/* Viniendo del enlace de recuperación no se dibuja nada hasta
+                que llegue la sesión: si no, se vería parpadear el formulario
+                de ingreso justo antes de la pantalla correcta. */}
+            {recuperandoContrasena ? (
+              session && (
+                <CambiarContrasena
+                  nav={overlayNav("vender")}
+                  supabase={supabase}
+                  onListo={() => setRecuperandoContrasena(false)}
+                  onCancelar={() => setRecuperandoContrasena(false)}
+                />
+              )
+            ) : session ? (
               <MisVehiculos nav={overlayNav("vender")} supabase={supabase} session={session} />
             ) : (
               <Cuenta
