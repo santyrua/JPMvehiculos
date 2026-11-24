@@ -310,7 +310,7 @@ export default function SolicitudesAdmin({ supabase, onPrefill, recargar = 0 }) 
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 text-sm md:grid-cols-2">
+                <div className="mt-4 grid gap-x-6 gap-y-2 text-sm md:grid-cols-2">
                   <p>
                     <span className="font-bold">Ciudad: </span>
                     {solicitud.city}
@@ -319,6 +319,18 @@ export default function SolicitudesAdmin({ supabase, onPrefill, recargar = 0 }) 
                     <span className="font-bold">Combustible: </span>
                     {solicitud.fuel} · <span className="font-bold">Transmisión: </span>
                     {solicitud.transmission}
+                  </p>
+                  <p>
+                    <span className="font-bold">Motor: </span>
+                    {solicitud.motor || "—"} · <span className="font-bold">Carrocería: </span>
+                    {solicitud.body_type || "—"}
+                  </p>
+                  <p>
+                    <span className="font-bold">Puertas: </span>
+                    {solicitud.doors || "—"} · <span className="font-bold">Cámara de reversa: </span>
+                    {solicitud.reverse_camera || "—"} ·{" "}
+                    <span className="font-bold">Último dígito: </span>
+                    {solicitud.plate_last_digit || "—"}
                   </p>
                 </div>
 

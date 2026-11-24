@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
 import { Button } from "./ui.jsx";
 import { compressImage } from "./imageCompression.js";
+import { bodyTypesByVehicleType } from "./vehicleOptions.js";
 
 const AdminPanel = lazy(() => import("./AdminPanel.jsx"));
 const AdminLogin = lazy(() => import("./AdminLogin.jsx"));
@@ -44,12 +45,6 @@ const emptyForm = {
   status: "Disponible",
 };
 
-// Carrocerías válidas según el tipo de vehículo. Los tipos que no estén aquí
-// (Moto) dejan el campo como texto libre.
-const bodyTypesByVehicleType = {
-  Carro: ["Sedán", "Hatchback", "Coupé", "Convertible", "Wagon"],
-  Camioneta: ["SUV", "Wagon", "Platón", "Panel", "Furgón"],
-};
 
 const requiredFields = [
   ["name", "Nombre completo del vehículo"],
@@ -1163,9 +1158,8 @@ export default function JPMVehiculosWeb() {
   // nuevos, así que al guardar se suben a vehicle-photos igual que si el
   // negocio las hubiera elegido a mano.
   //
-  // Lo que no se precarga (motor, puertas, carrocería, último dígito de la
-  // placa) es justo lo que hay que mirar en la tarjeta de propiedad, y el
-  // nombre queda como borrador para que el negocio lo escriba como va.
+  // Viene todo lo que el dueño llenó. El nombre queda como borrador, porque
+  // ese sí hay que escribirlo como aparece en la tarjeta de propiedad.
   async function precargarSolicitud(solicitud) {
     setEditingIndex(null);
     setAdminError("");
@@ -1185,6 +1179,11 @@ export default function JPMVehiculosWeb() {
       city: solicitud.city || "Barranquilla",
       color: solicitud.color || "",
       transmission: solicitud.transmission || "Automática",
+      doors: solicitud.doors || "5",
+      motor: solicitud.motor || "",
+      bodyType: solicitud.body_type || "",
+      reverseCamera: solicitud.reverse_camera || "Sí",
+      plateLastDigit: solicitud.plate_last_digit || "",
       description: solicitud.comments || "",
       status: "Disponible",
     });

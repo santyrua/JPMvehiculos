@@ -217,6 +217,16 @@ create table if not exists vehicle_requests (
   fuel text not null,
   transmission text not null,
   color text not null check (char_length(color) <= 30),
+
+  -- Estos los pide el formulario público para que al pasar la solicitud al
+  -- formulario de publicación no queden huecos. Van nullable porque la moto
+  -- no lleva puertas ni cámara de reversa.
+  doors text check (doors is null or doors ~ '^[1-9]$'),
+  motor text check (motor is null or char_length(motor) <= 30),
+  body_type text check (body_type is null or char_length(body_type) <= 40),
+  reverse_camera text check (reverse_camera is null or reverse_camera in ('Sí', 'No')),
+  plate_last_digit text check (plate_last_digit is null or plate_last_digit ~ '^[0-9]$'),
+
   comments text check (char_length(comments) <= 1000),
 
   -- Rutas dentro del bucket request-photos, no URLs públicas.

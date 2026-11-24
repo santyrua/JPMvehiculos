@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { compressImage } from "./imageCompression.js";
+import {
+  VEHICLE_TYPES,
+  FUELS,
+  TRANSMISSIONS,
+  bodyTypesByVehicleType,
+} from "./vehicleOptions.js";
 
 // El área de quien ya entró: sus datos, el formulario para subir un vehículo y
 // el estado de lo que ya mandó.
@@ -10,12 +16,6 @@ import { compressImage } from "./imageCompression.js";
 // limitan cada cosa; lo de aquí es solo la interfaz.
 
 const MAX_FOTOS = 8;
-
-// Mismo vocabulario que el panel del admin, para que al precargar el
-// formulario de publicación los valores entren tal cual.
-const TIPOS = ["Carro", "Camioneta", "Moto"];
-const COMBUSTIBLES = ["Gasolina", "Diésel", "Híbrido", "Eléctrico"];
-const TRANSMISIONES = ["Automática", "Mecánica", "Por confirmar"];
 
 const formularioVacio = {
   type: "Carro",
@@ -29,6 +29,11 @@ const formularioVacio = {
   fuel: "Gasolina",
   transmission: "Automática",
   color: "",
+  doors: "5",
+  motor: "",
+  bodyType: "",
+  reverseCamera: "Sí",
+  plateLastDigit: "",
   comments: "",
 };
 
@@ -221,7 +226,20 @@ export default function MisVehiculos({ nav, supabase, session }) {
   }
 
   function actualizarCampo(campo, valor) {
-    setForm((actual) => ({ ...actual, [campo]: valor }));
+    setForm((actual) => {
+      const siguiente = { ...actual, [campo]: valor };
+
+      // Al cambiar de tipo, una carrocería que ya no aplica se limpia. Igual
+      // que en el panel del admin.
+      if (campo === "type") {
+        const opciones = bodyTypesByVehicleType[valor];
+        if (opciones && siguiente.bodyType && !opciones.includes(siguiente.bodyType)) {
+          siguiente.bodyType = "";
+        }
+      }
+
+      return siguiente;
+    });
   }
 
   async function elegirFotos(event) {
@@ -276,6 +294,10 @@ export default function MisVehiculos({ nav, supabase, session }) {
     if (!soloDigitos(form.price)) return "Escribe el precio que esperas.";
     if (!form.city.trim()) return "Escribe la ciudad.";
     if (!form.color.trim()) return "Escribe el color.";
+    if (!form.motor.trim()) return "Escribe el motor, por ejemplo 1.6.";
+    if (!form.bodyType.trim()) return "Falta el tipo de carrocería.";
+    if (!/^[0-9]$/.test(form.plateLastDigit)) return "Escribe el último dígito de la placa.";
+    if (form.type !== "Moto" && !/^[1-9]$/.test(form.doors)) return "Escribe cuántas puertas tiene.";
     if (fotos.length === 0) return "Sube al menos una foto del vehículo.";
     return "";
   }
@@ -323,6 +345,12 @@ export default function MisVehiculos({ nav, supabase, session }) {
         fuel: form.fuel,
         transmission: form.transmission,
         color: form.color.trim(),
+        // La moto no lleva puertas ni cámara de reversa.
+        doors: form.type === "Moto" ? null : form.doors,
+        motor: form.motor.trim(),
+        body_type: form.bodyType.trim(),
+        reverse_camera: form.type === "Moto" ? null : form.reverseCamera,
+        plate_last_digit: form.plateLastDigit,
         comments: form.comments.trim() || null,
         photos: rutas,
       });
@@ -392,6 +420,9 @@ export default function MisVehiculos({ nav, supabase, session }) {
     setNuevaContrasena("");
     setContrasenaAviso("Contraseña actualizada.");
   }
+
+  const esMoto = form.type === "Moto";
+  const carroceriasDelTipo = bodyTypesByVehicleType[form.type] || null;
 
   const claseCampo = "w-full rounded-2xl bg-white px-4 py-3 text-zinc-950 outline-none";
   const claseEtiqueta = "mb-2 block text-sm font-bold";
@@ -503,7 +534,7 @@ export default function MisVehiculos({ nav, supabase, session }) {
                 className={claseCampo}
                 aria-label="Tipo de vehículo"
               >
-                {TIPOS.map((tipo) => <option key={tipo}>{tipo}</option>)}
+                {VEHICLE_TYPES.map((tipo) => <option key={tipo}>{tipo}</option>)}
               </select>
             </div>
 
@@ -564,7 +595,7 @@ export default function MisVehiculos({ nav, supabase, session }) {
               <select id="vehiculo-combustible" name="combustible" value={form.fuel}
                 onChange={(event) => actualizarCampo("fuel", event.target.value)}
                 className={claseCampo} aria-label="Combustible">
-                {COMBUSTIBLES.map((item) => <option key={item}>{item}</option>)}
+                {FUELS.map((item) => <option key={item}>{item}</option>)}
               </select>
             </div>
 
@@ -573,7 +604,7 @@ export default function MisVehiculos({ nav, supabase, session }) {
               <select id="vehiculo-transmision" name="transmision" value={form.transmission}
                 onChange={(event) => actualizarCampo("transmission", event.target.value)}
                 className={claseCampo} aria-label="Transmisión">
-                {TRANSMISIONES.map((item) => <option key={item}>{item}</option>)}
+                {TRANSMISSIONS.map((item) => <option key={item}>{item}</option>)}
               </select>
             </div>
 
@@ -583,6 +614,65 @@ export default function MisVehiculos({ nav, supabase, session }) {
                 onChange={(event) => actualizarCampo("color", event.target.value)}
                 className={claseCampo} placeholder="Gris, blanco, rojo..." aria-label="Color" />
             </div>
+
+            <div>
+              <label htmlFor="vehiculo-motor" className={claseEtiqueta}>Motor</label>
+              <input id="vehiculo-motor" name="motor" type="text" value={form.motor}
+                onChange={(event) => actualizarCampo("motor", event.target.value)}
+                className={claseCampo} placeholder="1.6, 2.0 turbo..." aria-label="Motor" />
+            </div>
+
+            <div>
+              <label htmlFor="vehiculo-carroceria" className={claseEtiqueta}>Tipo de carrocería</label>
+              {carroceriasDelTipo ? (
+                <select
+                  id="vehiculo-carroceria"
+                  name="carroceria"
+                  value={form.bodyType}
+                  onChange={(event) => actualizarCampo("bodyType", event.target.value)}
+                  className={claseCampo}
+                  aria-label="Tipo de carrocería"
+                >
+                  <option value="">Elige una</option>
+                  {carroceriasDelTipo.map((item) => <option key={item}>{item}</option>)}
+                </select>
+              ) : (
+                // La moto no tiene una lista fija, igual que en el panel del admin.
+                <input id="vehiculo-carroceria" name="carroceria" type="text" value={form.bodyType}
+                  onChange={(event) => actualizarCampo("bodyType", event.target.value)}
+                  className={claseCampo} placeholder="Deportiva, scooter..." aria-label="Tipo de carrocería" />
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="vehiculo-placa" className={claseEtiqueta}>Último dígito de la placa</label>
+              <input id="vehiculo-placa" name="placa" type="text" inputMode="numeric" maxLength={1}
+                value={form.plateLastDigit}
+                onChange={(event) => actualizarCampo("plateLastDigit", soloDigitos(event.target.value).slice(0, 1))}
+                className={claseCampo} placeholder="7" aria-label="Último dígito de la placa" />
+            </div>
+
+            {!esMoto && (
+              <div>
+                <label htmlFor="vehiculo-puertas" className={claseEtiqueta}>Puertas</label>
+                <input id="vehiculo-puertas" name="puertas" type="text" inputMode="numeric" maxLength={1}
+                  value={form.doors}
+                  onChange={(event) => actualizarCampo("doors", soloDigitos(event.target.value).slice(0, 1))}
+                  className={claseCampo} placeholder="5" aria-label="Puertas" />
+              </div>
+            )}
+
+            {!esMoto && (
+              <div>
+                <label htmlFor="vehiculo-camara" className={claseEtiqueta}>¿Tiene cámara de reversa?</label>
+                <select id="vehiculo-camara" name="camara" value={form.reverseCamera}
+                  onChange={(event) => actualizarCampo("reverseCamera", event.target.value)}
+                  className={claseCampo} aria-label="¿Tiene cámara de reversa?">
+                  <option>Sí</option>
+                  <option>No</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">
