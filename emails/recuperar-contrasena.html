@@ -1,0 +1,89 @@
+<!--
+  Plantilla de "Reset Password" de Supabase Auth, en español.
+  Se pega en el panel: Authentication -> Emails -> Reset Password.
+  Asunto sugerido: Tu contraseña nueva de JPM Vehículos
+
+  {{ .ConfirmationURL }} lo reemplaza Supabase por el enlace real. No lo
+  cambies ni lo envuelvas en nada que lo modifique.
+
+  Las mismas razones de forma que en confirmar-registro.html: tablas y
+  estilos en línea, logo sobre negro, y texto oculto arriba para el adelanto
+  de la bandeja de entrada.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:32px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+        Elige una contraseña nueva. El enlace vence en una hora.
+      </div>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:18px;overflow:hidden;">
+
+        <tr>
+          <td align="center" style="background-color:#000000;font-size:0;line-height:0;">
+            <img src="https://jpmvehiculos.com/email-logo.jpg"
+                 alt="JPM Vehículos · Siempre marcando la diferencia"
+                 width="520"
+                 style="display:block;width:100%;max-width:520px;height:auto;border:0;color:#fbbf24;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:60px;text-align:center;">
+          </td>
+        </tr>
+
+        <tr>
+          <td style="height:4px;background-color:#fbbf24;font-size:0;line-height:0;">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td style="padding:36px 32px 32px;">
+            <h1 style="margin:0 0 14px;color:#09090b;font-size:28px;line-height:1.25;letter-spacing:-0.5px;">
+              Elijamos una nueva.
+            </h1>
+
+            <p style="margin:0 0 24px;color:#3f3f46;font-size:16px;line-height:1.65;">
+              Nos pediste cambiar la contraseña de tu cuenta. Toca el botón y escribes una
+              distinta: la anterior no hace falta que la recuerdes.
+            </p>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td align="center" style="background-color:#fbbf24;border-radius:999px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:block;padding:16px 28px;color:#09090b;font-size:17px;font-weight:bold;text-decoration:none;">
+                    Elegir contraseña nueva
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <div style="background-color:#fafafa;border-left:3px solid #fbbf24;padding:14px 16px;margin-top:28px;">
+              <p style="margin:0;color:#52525b;font-size:14px;line-height:1.6;">
+                El enlace sirve <strong>una sola vez</strong> y vence en una hora. Si se te pasa,
+                pide otro desde el sitio y listo.
+              </p>
+            </div>
+
+            <p style="margin:20px 0 0;color:#71717a;font-size:13px;line-height:1.6;">
+              ¿No pediste cambiarla? Ignora este correo. Tu contraseña sigue siendo la de siempre
+              mientras nadie entre por este enlace.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background-color:#09090b;padding:24px 32px;">
+            <p style="margin:0 0 10px;color:#a1a1aa;font-size:13px;line-height:1.6;">
+              ¿Sigues sin poder entrar? Escríbenos por
+              <a href="https://wa.me/573175792923" style="color:#fbbf24;text-decoration:none;font-weight:bold;">WhatsApp</a>.
+            </p>
+            <p style="margin:0;color:#52525b;font-size:11px;line-height:1.6;">
+              JPM Vehículos · Barranquilla, Colombia<br>
+              Si el botón no funciona, copia esta dirección en tu navegador:<br>
+              <span style="color:#71717a;word-break:break-all;">{{ .ConfirmationURL }}</span>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
