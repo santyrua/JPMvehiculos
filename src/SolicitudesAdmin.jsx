@@ -130,54 +130,71 @@ export default function SolicitudesAdmin({ supabase, onPrefill, recargar = 0 }) 
     if (nota === null) return;
 
     setOcupado(solicitud.id);
+    setError("");
 
-    const { error: fallo } = await supabase
-      .from("vehicle_requests")
-      .update({
-        status: "descartada",
-        admin_note: nota.trim() ? nota.trim().slice(0, 500) : null,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", solicitud.id);
+    try {
+      // El .select() no es cosmético: sin él, un update que no toca ninguna
+      // fila (porque RLS la filtró) vuelve sin error y pasaría por éxito.
+      const { data: cambiadas, error: fallo } = await supabase
+        .from("vehicle_requests")
+        .update({
+          status: "descartada",
+          admin_note: nota.trim() ? nota.trim().slice(0, 500) : null,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", solicitud.id)
+        .select("id");
 
-    setOcupado("");
+      if (fallo) throw fallo;
+      if (!cambiadas?.length) throw new Error("la base no cambió ninguna fila (permisos)");
 
-    if (fallo) {
+      await cargar();
+    } catch (fallo) {
       console.error(fallo);
-      setError("No se pudo descartar. Intenta de nuevo.");
-      return;
+      setError("No se pudo descartar: " + (fallo?.message || fallo));
+    } finally {
+      setOcupado("");
     }
-
-    await cargar();
   }
 
   async function eliminar(solicitud) {
     if (!window.confirm("¿Eliminar esta solicitud y sus fotos? No se puede deshacer.")) return;
 
     setOcupado(solicitud.id);
+    setError("");
 
-    // Las fotos primero: borrada la fila ya no hay de dónde sacar sus rutas.
-    if (solicitud.photos?.length) {
-      const { error: falloFotos } = await supabase.storage
-        .from("request-photos")
-        .remove(solicitud.photos);
-      if (falloFotos) console.error(falloFotos);
-    }
+    try {
+      // Las fotos primero: borrada la fila ya no hay de dónde sacar sus rutas.
+      if (solicitud.photos?.length) {
+        const { data: quitadas, error: falloFotos } = await supabase.storage
+          .from("request-photos")
+          .remove(solicitud.photos);
 
-    const { error: fallo } = await supabase
-      .from("vehicle_requests")
-      .delete()
-      .eq("id", solicitud.id);
+        if (falloFotos) throw falloFotos;
 
-    setOcupado("");
+        // Storage no da error cuando no puede borrar un archivo: simplemente
+        // no lo devuelve entre los quitados.
+        if ((quitadas || []).length < solicitud.photos.length) {
+          throw new Error("Storage no quitó todas las fotos");
+        }
+      }
 
-    if (fallo) {
+      const { data: borradas, error: fallo } = await supabase
+        .from("vehicle_requests")
+        .delete()
+        .eq("id", solicitud.id)
+        .select("id");
+
+      if (fallo) throw fallo;
+      if (!borradas?.length) throw new Error("la base no borró ninguna fila (permisos)");
+
+      await cargar();
+    } catch (fallo) {
       console.error(fallo);
-      setError("No se pudo eliminar. Intenta de nuevo.");
-      return;
+      setError("No se pudo eliminar: " + (fallo?.message || fallo));
+    } finally {
+      setOcupado("");
     }
-
-    await cargar();
   }
 
   async function pasarAlFormulario(solicitud) {
